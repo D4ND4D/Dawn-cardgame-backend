@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0d1528"/>
+      <stop offset="100%" stop-color="#05081a"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="100%" r="60%">
+      <stop offset="0%" stop-color="rgba(255,130,40,0.3)"/>
+      <stop offset="100%" stop-color="rgba(255,130,40,0)"/>
+    </radialGradient>
+  </defs>
+
+  <!-- background -->
+  <rect width="32" height="32" rx="6" fill="url(#bg)"/>
+  <rect width="32" height="32" rx="6" fill="url(#glow)"/>
+
+  <!-- stars -->
+  <circle cx="5"  cy="5"  r="0.9" fill="rgba(220,230,255,0.8)"/>
+  <circle cx="26" cy="4"  r="0.7" fill="rgba(220,230,255,0.7)"/>
+  <circle cx="13" cy="3"  r="0.6" fill="rgba(220,230,255,0.6)"/>
+  <circle cx="28" cy="10" r="0.6" fill="rgba(220,230,255,0.55)"/>
+  <circle cx="4"  cy="13" r="0.5" fill="rgba(220,230,255,0.5)"/>
+
+  <!-- crescent moon -->
+  <path d="M18,5 C12,6 8,10 8,15 C8,20 12,24 18,25 C14,22 12,19 12,15 C12,11 14,8 18,5 Z"
+    fill="rgba(220,210,175,0.9)" stroke="rgba(255,220,150,0.3)" stroke-width="0.4"/>
+
+  <!-- horizon glow -->
+  <rect x="0" y="26" width="32" height="2" rx="1" fill="rgba(255,120,30,0.2)"/>
+
+  <!-- D letter mark -->
+  <text x="16" y="20"
+    font-family="'Special Elite','Georgia',serif"
+    font-size="14" font-weight="400"
+    fill="rgba(255,255,255,0.9)"
+    text-anchor="middle"
+    dominant-baseline="middle">D</text>
+
+  <!-- border -->
+  <rect x="1" y="1" width="30" height="30" rx="5"
+    fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.7"/>
+</svg>

@@ -1,0 +1,2439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dawn — The Masquerade of Shadows</title>
+<link rel="icon" type="image/svg+xml" href="dawn-favicon.svg">
+<link rel="stylesheet" href="dawn-cursor.css">
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js" crossorigin="anonymous"></script>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Caveat:wght@400;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════
+   BASE
+══════════════════════════════════════════ */
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg:    #010409;
+  --navy:  #04070f;
+  --blue:  #070d1a;
+  --text:  #ffffff;
+  --muted: rgba(255,255,255,0.5);
+  --dim:   rgba(255,255,255,0.08);
+  --wolf:  #ef4444;
+  --witch: #a855f7;
+  --hunter:#22c55e;
+  --seeker:#06b6d4;
+  --leader:#f59e0b;
+}
+html,body { height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:'Special Elite',cursive; }
+
+/* ══ NEON GLOWS ══ */
+.header-title { text-shadow: 0 0 8px rgba(80,140,255,0.9), 0 0 20px rgba(80,140,255,0.5); }
+.mb-label, .gob-label { text-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 24px rgba(80,160,255,0.6); }
+.menu-btn:hover .mb-label { text-shadow: 0 0 12px #fff, 0 0 30px rgba(100,180,255,0.9), 0 0 60px rgba(60,120,255,0.5); }
+.game-option-btn:hover .gob-label { text-shadow: 0 0 12px #fff, 0 0 30px rgba(100,180,255,0.9); }
+#page01 .htp-title { text-shadow: 0 0 12px rgba(80,140,255,0.9), 0 0 30px rgba(80,140,255,0.5); }
+.mini-card-name { text-shadow: 0 0 6px currentColor; }
+.role-tag { filter: drop-shadow(0 0 4px currentColor); }
+.game-name { text-shadow: 0 0 20px rgba(120,180,255,0.9), 0 0 50px rgba(60,120,255,0.6) !important; }
+.p9-enter h2 { text-shadow: 0 0 10px rgba(80,140,255,0.9), 0 0 28px rgba(80,140,255,0.5); }
+.frame { box-shadow: 0 0 30px rgba(40,80,220,0.25), inset 0 0 60px rgba(20,40,120,0.12); }
+.art-block { box-shadow: inset 0 0 40px rgba(10,20,60,0.6) !important; }
+.menu-btn:hover { box-shadow: 0 0 18px rgba(60,120,255,0.4), inset 0 0 30px rgba(30,60,180,0.2) !important; }
+.mini-card { box-shadow: 0 0 8px currentColor, inset 0 0 10px rgba(0,0,0,0.6); }
+.page-num { text-shadow: 0 0 6px rgba(80,140,255,0.7); }
+
+/* ══ PAGE SYSTEM ══ */
+.page { display:none; position:fixed; inset:0; z-index:1; flex-direction:column; animation:pgIn 0.3s ease; }
+.page.active { display:flex; }
+@keyframes pgIn { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none} }
+
+/* ══ FRAME ══ */
+.frame { margin:12px; flex:1; position:relative; display:flex; flex-direction:column; overflow:hidden; background:var(--navy); }
+.sq { position:relative; }
+canvas.bc { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:15; }
+
+/* ══ HEADER ══ */
+.header { padding:16px 26px; display:flex; justify-content:space-between; align-items:center; background:#000; flex-shrink:0; }
+.header-title { font-size:0.9rem; letter-spacing:0.18em; text-transform:uppercase; }
+.page-num { font-size:0.72rem; letter-spacing:0.2em; color:var(--muted); }
+.content { flex:1; display:flex; padding:16px; gap:14px; overflow:hidden; }
+.back-btn { position:fixed; bottom:24px; left:28px; background:transparent; border:none; color:var(--muted); font-family:'Special Elite',cursive; font-size:0.88rem; letter-spacing:0.15em; cursor:pointer; z-index:99; padding:6px 14px; transition:color 0.15s; }
+.back-btn:hover { color:#fff; }
+
+/* ══ PAGE 01 ══ */
+#page01 .content { flex-direction:row; }
+#page01 .left-col { width:34%; display:flex; flex-direction:column; gap:12px; }
+#page01 .art-block { flex:1; background:#070d1a; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+#page01 .right-col { flex:1; display:flex; flex-direction:column; gap:10px; }
+.mini-cards-wrap { display:flex; flex-wrap:wrap; gap:5px; justify-content:center; align-items:center; padding:10px; width:100%; }
+.mini-card { width:58px; height:86px; border-radius:5px; background:#05081a; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; position:relative; flex-shrink:0; overflow:hidden; }
+.mini-card svg { width:34px; height:40px; }
+.mini-card-name { font-family:'Special Elite',cursive; font-size:0.38rem; letter-spacing:0.04em; color:rgba(255,255,255,0.75); text-align:center; }
+.mini-card::before { content:''; position:absolute; inset:2px; border-radius:4px; border:1px dashed currentColor; opacity:0.4; pointer-events:none; }
+.menu-btn { flex:1; background:var(--navy); display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; overflow:hidden; transition:transform 0.12s ease, background 0.15s; }
+.menu-btn:hover { transform:translateY(-4px); background:rgba(15,29,94,0.7); }
+.mb-label { font-size:1.05rem; letter-spacing:0.32em; text-transform:uppercase; color:var(--text); position:relative; z-index:2; }
+
+/* ══ PAGE 02 ══ */
+.game-option-btn { flex:1; background:var(--navy); display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; overflow:hidden; transition:transform 0.12s ease, background 0.15s; }
+.game-option-btn:hover { transform:translateY(-4px); background:rgba(15,29,94,0.6); }
+.gob-label { font-size:1.05rem; letter-spacing:0.28em; text-transform:uppercase; color:var(--text); position:relative; z-index:2; }
+
+/* ══ PAGE 03 ══ */
+#page03 .htp-left { width:28%; background:#000; display:flex; align-items:center; justify-content:center; flex-shrink:0; position:relative; }
+#page03 .htp-title { font-size:3.6rem; line-height:1.0; text-align:center; text-transform:uppercase; letter-spacing:0.04em; }
+#page03 .htp-right { flex:1; overflow-y:auto; padding:18px 26px; }
+#page03 .htp-right::-webkit-scrollbar{width:2px}
+#page03 .htp-right::-webkit-scrollbar-thumb{background:var(--blue)}
+.rules-heading { font-size:0.62rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--muted); text-align:center; margin-bottom:5px; }
+.rules-intro { font-family:'Rajdhani',sans-serif; font-size:0.86rem; text-align:center; line-height:1.5; margin-bottom:14px; color:rgba(255,255,255,0.8); }
+.role-block { margin-bottom:9px; font-family:'Rajdhani',sans-serif; font-size:0.82rem; line-height:1.6; color:var(--muted); padding-bottom:9px; border-bottom:1px solid rgba(255,255,255,0.06); }
+.role-tag { font-family:'Special Elite',cursive; font-size:0.95rem; }
+.r-wolf{color:var(--wolf)}.r-witch{color:var(--witch)}.r-hunter{color:var(--hunter)}.r-seeker{color:var(--seeker)}.r-leader{color:var(--leader)}.r-vill{color:rgba(255,255,255,0.8)}
+.section-title { font-size:0.6rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--muted); text-align:center; margin:14px 0 7px; }
+.goal-text { font-family:'Rajdhani',sans-serif; font-size:0.84rem; text-align:center; line-height:1.75; color:rgba(255,255,255,0.8); }
+.goal-text strong{color:var(--wolf)}
+
+/* ══ PAGE 04 ══ */
+#page04 .credit-tag { background:#000; padding:13px 24px; font-size:0.68rem; letter-spacing:0.24em; color:var(--muted); text-transform:uppercase; }
+#page04 .credit-body { flex:1; background:var(--navy); display:flex; align-items:center; justify-content:center; position:relative; margin-top:10px; }
+#page04 .credit-text { font-family:'Rajdhani',sans-serif; font-size:0.96rem; text-align:center; line-height:2.1; color:rgba(255,255,255,0.82); }
+#page04 .credit-text strong{color:#fff}
+#page04 .pt-row{display:flex;justify-content:flex-end;margin-top:10px;}
+#page04 .pt-btn { background:var(--navy); border:none; color:var(--muted); padding:13px 42px; font-family:'Special Elite',cursive; font-size:0.86rem; letter-spacing:0.18em; text-transform:uppercase; cursor:pointer; position:relative; transition:color 0.15s, transform 0.12s; }
+#page04 .pt-btn:hover{color:#fff; transform:translateY(-3px);}
+
+/* ══ PAGE 09 ══ */
+.p9-main{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px;}
+.p9-enter h2{font-size:2.3rem;letter-spacing:0.04em;}
+.p9-hint{font-family:'Rajdhani',sans-serif;font-size:0.82rem;color:var(--muted);}
+.p9-hint strong{font-family:'Special Elite',cursive;color:#fff;letter-spacing:0.14em;}
+.p9-side{width:44%;display:flex;flex-direction:column;gap:10px;justify-content:center;}
+.p9-code-box{background:var(--navy);padding:16px 18px;display:flex;flex-direction:column;gap:9px;}
+.p9-code-label{font-size:0.62rem;letter-spacing:0.24em;text-transform:uppercase;color:var(--muted);}
+.p9-input{background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.25);outline:none;font-family:'Special Elite',cursive;font-size:1.25rem;letter-spacing:0.28em;color:#fff;padding:5px 0;width:100%;text-transform:uppercase;}
+.p9-input::placeholder{color:rgba(255,255,255,0.18);font-size:0.86rem;}
+.p9-help{font-family:'Rajdhani',sans-serif;font-size:0.84rem;color:var(--muted);padding:10px 12px;background:rgba(255,255,255,0.02);}
+.p9-help span{display:block;font-size:0.78rem;margin-top:4px;opacity:0.65;}
+/* join error */
+#join-error { font-family:'Rajdhani',sans-serif; font-size:0.78rem; color:rgba(239,68,68,0.85); letter-spacing:0.05em; margin-top:6px; opacity:0; transition:opacity 0.4s; pointer-events:none; }
+/* join loading */
+#join-loading { display:none; flex-direction:column; align-items:center; gap:14px; padding:20px; }
+#join-loading .jl-dot { width:8px; height:8px; border-radius:50%; background:rgba(80,140,255,0.8); box-shadow:0 0 8px rgba(80,140,255,0.8); animation:jlPulse 1.4s ease-in-out infinite; }
+@keyframes jlPulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(0.5);opacity:0.3} }
+
+/* ══ LOBBY ══ */
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+.house-slot { position:relative; border:1px solid rgba(255,255,255,0.1); background:#04070f; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; padding:10px 6px; transition:border-color 0.2s, box-shadow 0.2s; overflow:hidden; }
+.house-slot.occupied { border-color:rgba(80,140,255,0.4); box-shadow:0 0 14px rgba(60,100,255,0.2), inset 0 0 20px rgba(20,40,120,0.15); }
+.house-slot.disconnected { border-color:rgba(239,68,68,0.2); opacity:0.6; }
+.house-slot .house-num { position:absolute;top:6px;left:8px; font-family:'Special Elite',cursive; font-size:0.55rem;letter-spacing:0.15em; color:rgba(255,255,255,0.2); }
+.house-slot .avatar { width:46px;height:46px;border-radius:50%; background:#0d1530; display:flex;align-items:center;justify-content:center; border:1.5px solid rgba(255,255,255,0.12); overflow:hidden; flex-shrink:0; }
+.house-slot.occupied .avatar { border-color:rgba(80,140,255,0.6); box-shadow:0 0 10px rgba(60,120,255,0.35); }
+.house-slot .player-name { font-family:'Special Elite',cursive; font-size:0.58rem;letter-spacing:0.08em; color:rgba(255,255,255,0.75); text-align:center; text-shadow:0 0 6px rgba(80,140,255,0.5); max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.house-slot .empty-label { font-family:'Special Elite',cursive; font-size:0.52rem;letter-spacing:0.1em; color:rgba(255,255,255,0.15); text-align:center; }
+.house-icon { opacity:0.12; position:absolute; bottom:4px; right:6px; }
+.dc-badge { font-family:'Rajdhani',sans-serif; font-size:0.5rem; letter-spacing:0.1em; color:rgba(239,68,68,0.7); text-transform:uppercase; }
+
+/* ══ CHAT ══ */
+#chat-messages::-webkit-scrollbar { width:3px; }
+#chat-messages::-webkit-scrollbar-thumb { background:rgba(80,140,255,0.3); border-radius:2px; }
+.chat-msg { display:flex; flex-direction:column; gap:1px; }
+.chat-msg .msg-name { font-family:'Special Elite',cursive; font-size:0.52rem;letter-spacing:0.1em; text-transform:uppercase;opacity:0.55; }
+.chat-msg .msg-text { font-family:'Rajdhani',sans-serif; font-size:0.82rem;line-height:1.4; color:rgba(255,255,255,0.85); word-break:break-word; }
+.chat-msg.is-wolf .msg-name { color:#ef4444; text-shadow:0 0 6px rgba(239,68,68,0.6); }
+.chat-msg.is-wolf .msg-text { color:rgba(255,180,180,0.9); }
+.chat-msg.is-system .msg-text { color:rgba(255,255,255,0.25); font-size:0.72rem; font-style:italic; text-align:center; }
+.chat-msg.is-self .msg-name { color:rgba(80,160,255,0.8); text-shadow:0 0 6px rgba(60,120,255,0.5); }
+.chat-msg.is-self .msg-text { color:rgba(180,210,255,0.9); }
+
+/* ══ SETTINGS MODAL ══ */
+#settings-overlay { display:none; position:fixed; inset:0; z-index:200; background:rgba(1,4,9,0.88); align-items:center; justify-content:center; animation:pgIn 0.2s ease; }
+#settings-overlay.open { display:flex; }
+#settings-panel { background:var(--navy); width:min(480px,90%); display:flex; flex-direction:column; border:1px solid rgba(255,255,255,0.1); box-shadow:0 0 40px rgba(40,80,220,0.2); }
+.settings-header { padding:16px 22px; border-bottom:1px solid var(--dim); display:flex; align-items:center; justify-content:space-between; background:#000; }
+.settings-header span { font-size:0.72rem; letter-spacing:0.28em; text-transform:uppercase; color:var(--muted); }
+.settings-close { background:transparent; border:none; color:var(--muted); font-size:1.2rem; cursor:pointer; transition:color 0.15s; padding:4px 8px; }
+.settings-close:hover { color:#fff; }
+.settings-body { padding:20px 22px; display:flex; flex-direction:column; gap:18px; }
+.setting-row { display:flex; align-items:center; justify-content:space-between; gap:14px; }
+.setting-label { display:flex; flex-direction:column; gap:3px; }
+.setting-label span { font-size:0.72rem; letter-spacing:0.18em; text-transform:uppercase; color:rgba(255,255,255,0.7); }
+.setting-label small { font-family:'Rajdhani',sans-serif; font-size:0.7rem; color:var(--muted); }
+.setting-stepper { display:flex; align-items:center; gap:10px; }
+.step-btn { background:transparent; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.6); width:28px; height:28px; font-family:'Special Elite',cursive; font-size:1rem; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; justify-content:center; }
+.step-btn:hover { border-color:rgba(255,255,255,0.4); color:#fff; }
+.step-val { font-family:'Caveat',cursive; font-size:1.4rem; font-weight:700; color:#fff; min-width:32px; text-align:center; }
+.settings-footer { padding:14px 22px; border-top:1px solid var(--dim); display:flex; justify-content:flex-end; }
+.settings-save-btn { background:transparent; border:1px solid rgba(80,140,255,0.4); color:rgba(80,160,255,0.8); padding:9px 30px; font-family:'Special Elite',cursive; font-size:0.72rem; letter-spacing:0.2em; text-transform:uppercase; cursor:pointer; transition:all 0.15s; }
+.settings-save-btn:hover { border-color:rgba(80,160,255,0.9); color:#fff; box-shadow:0 0 14px rgba(60,120,255,0.3); }
+
+/* ══ PRE-GAME COUNTDOWN ══ */
+#page-pregame { background:var(--bg); }
+#pregame-frame { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; }
+#pregame-num { font-family:'Caveat',cursive; font-weight:700; font-size:10rem; line-height:1; color:#fff; text-shadow:0 0 40px rgba(80,140,255,0.9), 0 0 80px rgba(60,120,255,0.5); animation:pregameNum 1s steps(1) infinite; }
+@keyframes pregameNum { 0%{transform:scale(1.1)} 100%{transform:scale(1)} }
+#pregame-label { font-size:0.62rem; letter-spacing:0.4em; text-transform:uppercase; color:rgba(255,255,255,0.2); }
+
+/* ══ CARD PICK SCREEN ══ */
+#page-cardpick { background:var(--bg); }
+#cardpick-frame { display:flex; flex-direction:column; }
+#cardpick-header { padding:14px 24px; background:#000; border-bottom:1px solid var(--dim); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+#cardpick-header span { font-size:0.85rem; letter-spacing:0.2em; text-transform:uppercase; text-shadow:0 0 8px rgba(80,140,255,0.7); }
+#cardpick-status { font-family:'Rajdhani',sans-serif; font-size:0.75rem; letter-spacing:0.15em; color:var(--muted); }
+#cards-area { flex:1; display:flex; align-items:center; justify-content:center; padding:20px; overflow:hidden; }
+#cards-wrap { display:flex; gap:18px; align-items:center; justify-content:center; flex-wrap:wrap; }
+
+/* ── FLIP CARD ── */
+.flip-card { width:150px; height:225px; perspective:800px; cursor:pointer; flex-shrink:0; transition:transform 0.15s; }
+.flip-card:hover:not(.claimed):not(.flipped) { transform:translateY(-8px); }
+.flip-card-inner { width:100%; height:100%; position:relative; transform-style:preserve-3d; transition:transform 0.7s cubic-bezier(.4,0,.2,1); }
+.flip-card.flipped .flip-card-inner { transform:rotateY(180deg); }
+.flip-card-front, .flip-card-back { position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:10px; overflow:hidden; }
+.flip-card-back { transform:rotateY(0deg); }
+.flip-card-front { transform:rotateY(180deg); background:#05081a; border-radius:10px; }
+
+/* card back styles */
+.flip-card-back svg { width:100%; height:100%; }
+
+/* card front footer */
+.fc-footer { position:absolute; bottom:0; left:0; right:0; padding:7px 12px 11px; z-index:8; }
+.fc-footer .fc-name { font-family:'Caveat',cursive; font-size:1.35rem; font-weight:700; color:#fff; line-height:1; }
+.fc-footer .fc-sub { font-family:'Caveat',cursive; font-size:0.75rem; line-height:1.3; margin-top:1px; }
+.fc-divider { position:absolute; bottom:48px; left:10px; right:10px; height:1px; z-index:7; opacity:0.35; }
+.fc-border { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:10; }
+.fc-corner { position:absolute; font-family:'Caveat',cursive; font-size:0.7rem; font-weight:700; z-index:9; opacity:0.55; }
+.fc-corner.tl { top:8px; left:10px; }
+.fc-corner.br { bottom:54px; right:10px; transform:rotate(180deg); }
+
+/* claimed state */
+.flip-card.claimed { cursor:default; }
+.flip-card.claimed .flip-card-back { filter:brightness(0.35); }
+.claimed-label { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; z-index:20; opacity:0; transition:opacity 0.3s; pointer-events:none; }
+.flip-card.claimed .claimed-label { opacity:1; }
+.claimed-label span { font-family:'Special Elite',cursive; font-size:0.65rem; letter-spacing:0.3em; text-transform:uppercase; color:rgba(255,255,255,0.5); border:1px solid rgba(255,255,255,0.2); padding:6px 14px; background:rgba(0,0,0,0.5); }
+.flip-card.mine .claimed-label span { color:rgba(80,160,255,0.9); border-color:rgba(80,140,255,0.5); }
+
+/* card art SVG inside front */
+.flip-card-front svg.art { position:absolute; top:10%; left:50%; transform:translateX(-50%); width:76%; height:56%; z-index:5; overflow:visible; }
+
+/* ══ ROLE MESSAGE SCREEN ══ */
+#page-rolemsg { background:var(--bg); }
+#rolemsg-content { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:40px; }
+#rolemsg-eyebrow { font-size:0.58rem; letter-spacing:0.35em; text-transform:uppercase; color:rgba(255,255,255,0.25); animation:fadeUp 0.7s ease 0.2s both; }
+#rolemsg-card-wrap { animation:fadeUp 0.8s ease 0.4s both; }
+#rolemsg-msg { font-family:'Caveat',cursive; font-weight:700; font-size:1.5rem; text-align:center; line-height:1.5; color:rgba(255,255,255,0.85); max-width:420px; animation:fadeUp 0.7s ease 0.9s both; }
+#rolemsg-continue { margin-top:10px; padding:11px 40px; background:transparent; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.4); font-family:'Special Elite',cursive; font-size:0.7rem; letter-spacing:0.22em; text-transform:uppercase; cursor:pointer; transition:all 0.2s; animation:fadeUp 0.7s ease 1.2s both; }
+#rolemsg-continue:hover { color:#fff; border-color:rgba(255,255,255,0.4); }
+
+/* ══ VOTE-OUT REVEAL OVERLAY ══ */
+#voteout-overlay { display:none; position:fixed; inset:0; z-index:300; background:rgba(1,4,9,0.92); flex-direction:column; align-items:center; justify-content:center; gap:18px; }
+#voteout-overlay.open { display:flex; animation:pgIn 0.4s ease; }
+#voteout-name { font-family:'Caveat',cursive; font-weight:700; font-size:2.5rem; color:#fff; }
+#voteout-role { font-family:'Rajdhani',sans-serif; font-size:0.8rem; letter-spacing:0.3em; text-transform:uppercase; color:var(--muted); }
+#voteout-card-wrap { margin:10px 0; }
+#voteout-continue { padding:10px 36px; background:transparent; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.4); font-family:'Special Elite',cursive; font-size:0.7rem; letter-spacing:0.22em; text-transform:uppercase; cursor:pointer; transition:all 0.2s; margin-top:6px; }
+#voteout-continue:hover { color:#fff; border-color:rgba(255,255,255,0.4); }
+
+/* ══ NIGHT PHASE SCREENS ══ */
+.screen { display:none; position:fixed; inset:0; z-index:2; animation:pgIn 0.4s ease; }
+.screen.active { display:flex; flex-direction:column; }
+#stars-canvas { position:fixed; inset:0; z-index:0; pointer-events:none; }
+.night-title { color:#fff; text-shadow:0 0 12px rgba(150,150,255,0.7), 0 0 30px rgba(100,100,200,0.4); }
+#countdown-wrap { display:flex; align-items:center; gap:10px; }
+#countdown-num { font-family:'Caveat',cursive; font-size:2rem; font-weight:700; color:#fff; min-width:48px; text-align:center; text-shadow:0 0 14px rgba(150,150,255,0.9); line-height:1; }
+#countdown-bar-wrap { width:90px; height:3px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden; }
+#countdown-bar { height:100%; background:rgba(150,150,255,0.7); box-shadow:0 0 6px rgba(120,120,255,0.8); transition:width 1s linear; border-radius:2px; }
+.night-body { flex:1; display:flex; gap:12px; padding:14px; overflow:hidden; }
+.left-col { width:55%; display:flex; flex-direction:column; gap:12px; }
+.role-reminder { padding:14px 18px; background:var(--navy); display:flex; align-items:center; gap:14px; flex-shrink:0; border:1px solid var(--dim); }
+.role-reminder .role-icon { width:48px; height:60px; flex-shrink:0; }
+.role-reminder .role-info { display:flex; flex-direction:column; gap:3px; }
+.role-reminder .role-label { font-size:0.55rem; letter-spacing:0.25em; text-transform:uppercase; color:var(--muted); }
+.role-reminder .role-name { font-family:'Caveat',cursive; font-size:1.6rem; font-weight:700; line-height:1; }
+.role-reminder .role-desc { font-family:'Rajdhani',sans-serif; font-size:0.78rem; color:var(--muted); line-height:1.5; margin-top:2px; }
+.action-panel { flex:1; background:var(--navy); border:1px solid var(--dim); display:flex; flex-direction:column; overflow:hidden; }
+.action-panel .ap-header { padding:10px 16px; border-bottom:1px solid var(--dim); flex-shrink:0; display:flex; align-items:center; justify-content:space-between; }
+.action-panel .ap-title { font-size:0.62rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--muted); }
+.ap-instruction { font-family:'Rajdhani',sans-serif; font-size:0.78rem; color:rgba(255,255,255,0.5); padding:10px 16px 6px; flex-shrink:0; }
+.player-list { flex:1; overflow-y:auto; padding:8px 12px; display:flex; flex-direction:column; gap:6px; scrollbar-width:thin; scrollbar-color:rgba(150,100,255,0.3) transparent; }
+.player-list::-webkit-scrollbar { width:3px; }
+.player-list::-webkit-scrollbar-thumb { background:rgba(150,100,255,0.3); border-radius:2px; }
+.player-row { display:flex; align-items:center; gap:10px; padding:9px 12px; border:1px solid rgba(255,255,255,0.07); background:rgba(255,255,255,0.02); cursor:pointer; transition:all 0.15s; position:relative; overflow:hidden; }
+.player-row:hover { border-color:rgba(255,255,255,0.2); background:rgba(255,255,255,0.05); }
+.player-row.selected { border-color:rgba(239,68,68,0.6); background:rgba(239,68,68,0.08); box-shadow:0 0 12px rgba(239,68,68,0.15); }
+.player-row.selected-save { border-color:rgba(80,220,120,0.6); background:rgba(80,220,120,0.08); box-shadow:0 0 12px rgba(80,220,120,0.15); }
+.player-row.selected-check { border-color:rgba(6,182,212,0.6); background:rgba(6,182,212,0.08); box-shadow:0 0 12px rgba(6,182,212,0.15); }
+.player-row.is-you { opacity:0.35; cursor:not-allowed; pointer-events:none; }
+.player-avatar { width:32px; height:32px; border-radius:50%; background:#0d1530; border:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.player-name-txt { font-family:'Rajdhani',sans-serif; font-size:0.92rem; font-weight:600; color:rgba(255,255,255,0.85); flex:1; }
+.player-house { font-size:0.52rem; letter-spacing:0.12em; color:var(--muted); }
+.player-row .select-mark { font-size:0.6rem; letter-spacing:0.1em; color:rgba(239,68,68,0.8); text-transform:uppercase; opacity:0; transition:opacity 0.15s; }
+.player-row.selected .select-mark { opacity:1; }
+.confirm-btn { margin:10px 12px 12px; padding:10px; background:transparent; border:1px solid rgba(239,68,68,0.4); color:rgba(239,68,68,0.7); font-family:'Special Elite',cursive; font-size:0.72rem; letter-spacing:0.22em; text-transform:uppercase; cursor:pointer; transition:all 0.15s; text-align:center; }
+.confirm-btn:hover { background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.9); color:#fff; box-shadow:0 0 14px rgba(239,68,68,0.3); }
+.confirm-btn.green { border-color:rgba(80,220,120,0.4); color:rgba(80,220,120,0.7); }
+.confirm-btn.green:hover { background:rgba(80,220,120,0.1); border-color:rgba(80,220,120,0.9); box-shadow:0 0 14px rgba(80,220,120,0.3); }
+.confirm-btn.cyan { border-color:rgba(6,182,212,0.4); color:rgba(6,182,212,0.7); }
+.confirm-btn.cyan:hover { background:rgba(6,182,212,0.1); border-color:rgba(6,182,212,0.9); box-shadow:0 0 14px rgba(6,182,212,0.3); }
+.witch-toggle { display:flex; gap:8px; padding:10px 12px 4px; flex-shrink:0; }
+.witch-mode-btn { flex:1; padding:7px; border:1px solid var(--dim); background:transparent; font-family:'Special Elite',cursive; font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase; cursor:pointer; transition:all 0.15s; color:var(--muted); }
+.witch-mode-btn.active-kill { border-color:rgba(239,68,68,0.7); color:rgba(239,68,68,0.9); background:rgba(239,68,68,0.08); }
+.witch-mode-btn.active-save { border-color:rgba(80,220,120,0.7); color:rgba(80,220,120,0.9); background:rgba(80,220,120,0.08); }
+.reveal-box { margin:10px 12px; padding:14px; border:1px solid rgba(6,182,212,0.3); background:rgba(6,182,212,0.04); display:none; flex-direction:column; gap:6px; }
+.reveal-box .reveal-label { font-size:0.55rem; letter-spacing:0.2em; text-transform:uppercase; color:rgba(6,182,212,0.6); }
+.reveal-box .reveal-role { font-family:'Caveat',cursive; font-size:1.4rem; font-weight:700; text-shadow:0 0 10px currentColor; }
+.sleep-text { font-family:'Caveat',cursive; font-size:2.2rem; font-weight:700; color:rgba(255,255,255,0.25); text-align:center; letter-spacing:0.05em; animation:sleepPulse 3s ease-in-out infinite; }
+.sleep-sub { font-size:0.6rem; letter-spacing:0.3em; color:rgba(255,255,255,0.12); text-transform:uppercase; text-align:center; }
+@keyframes sleepPulse { 0%,100%{opacity:0.4} 50%{opacity:0.9} }
+.zzz { font-family:'Caveat',cursive; font-size:1.2rem; color:rgba(150,150,255,0.3); animation:floatZ 2.5s ease-in-out infinite; }
+@keyframes floatZ { 0%,100%{transform:translateY(0) rotate(-5deg);opacity:0.2} 50%{transform:translateY(-12px) rotate(5deg);opacity:0.6} }
+.right-col { flex:1; display:flex; flex-direction:column; gap:12px; }
+.chat-wrap { flex:1; background:var(--navy); border:1px solid var(--dim); display:flex; flex-direction:column; overflow:hidden; }
+.chat-wrap .chat-hdr { padding:10px 14px; border-bottom:1px solid var(--dim); flex-shrink:0; display:flex; align-items:center; justify-content:space-between; }
+.chat-hdr-title { font-size:0.62rem; letter-spacing:0.2em; text-transform:uppercase; }
+.wolf-chat-label { color:rgba(239,68,68,0.8); text-shadow:0 0 8px rgba(239,68,68,0.5); }
+.chat-msgs { flex:1; overflow-y:auto; padding:10px 12px; display:flex; flex-direction:column; gap:5px; scrollbar-width:thin; scrollbar-color:rgba(239,68,68,0.2) transparent; }
+.chat-msgs::-webkit-scrollbar{width:2px}
+.chat-msgs::-webkit-scrollbar-thumb{background:rgba(239,68,68,0.2)}
+.cmsg { display:flex; flex-direction:column; gap:1px; }
+.cmsg .cn { font-size:0.5rem; letter-spacing:0.1em; text-transform:uppercase; color:rgba(239,68,68,0.6); }
+.cmsg .ct { font-family:'Rajdhani',sans-serif; font-size:0.82rem; color:rgba(255,180,180,0.9); word-break:break-word; line-height:1.4; }
+.cmsg.sys .ct { color:rgba(255,255,255,0.2); font-size:0.72rem; font-style:italic; text-align:center; }
+.cmsg.self .cn { color:rgba(239,68,68,0.9); text-shadow:0 0 5px rgba(239,68,68,0.5); }
+.cmsg.self .ct { color:rgba(255,200,200,1); }
+.chat-input-row { padding:8px 10px; border-top:1px solid var(--dim); display:flex; gap:6px; align-items:center; flex-shrink:0; }
+.chat-input-row input { flex:1; background:rgba(255,255,255,0.03); border:none; border-bottom:1px solid rgba(239,68,68,0.35); outline:none; padding:5px 4px; font-family:'Special Elite',cursive; font-size:0.78rem; letter-spacing:0.05em; color:#fff; caret-color:rgba(239,68,68,0.9); }
+.chat-input-row button { background:transparent; border:1px solid rgba(239,68,68,0.35); color:rgba(239,68,68,0.7); padding:5px 10px; font-family:'Special Elite',cursive; font-size:0.65rem; letter-spacing:0.1em; cursor:pointer; transition:all 0.15s; }
+.chat-input-row button:hover { border-color:rgba(239,68,68,0.9); color:#fff; box-shadow:0 0 8px rgba(239,68,68,0.3); }
+.night-lock-box { flex:1; background:var(--navy); border:1px solid var(--dim); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; }
+.night-lock-box svg { opacity:0.4; }
+.night-lock-box span { font-size:0.62rem; letter-spacing:0.18em; text-transform:uppercase; color:rgba(255,255,255,0.2); text-align:center; line-height:1.7; }
+.status-box { background:var(--navy); border:1px solid var(--dim); padding:14px 16px; display:flex; flex-direction:column; gap:6px; flex-shrink:0; }
+.status-box .sb-label { font-size:0.55rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--muted); }
+.status-box .sb-val { font-family:'Caveat',cursive; font-size:1.1rem; font-weight:600; color:#fff; }
+.sleep-center { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; }
+#hunter-confirm-btn:hover { background:rgba(34,197,94,0.1); border-color:rgba(34,197,94,0.9); color:#fff; box-shadow:0 0 14px rgba(34,197,94,0.35); }
+.player-row.selected-hunter { border-color:rgba(34,197,94,0.6); background:rgba(34,197,94,0.08); box-shadow:0 0 12px rgba(34,197,94,0.15); }
+.player-row.selected-hunter .select-mark { opacity:1; color:rgba(34,197,94,0.9) !important; }
+
+/* ══ MORNING SCREEN ══ */
+#screen-morning { background:#000; z-index:50; }
+#morning-sky { position:absolute; inset:0; background:linear-gradient(180deg,#000510 0%,#0a0520 40%,#1a0a05 70%,#2a1000 100%); transition:background 0s; }
+#morning-horizon { position:absolute; bottom:0; left:0; right:0; height:38%; background:radial-gradient(ellipse at 50% 100%,rgba(255,100,20,0) 0%,rgba(255,100,20,0) 100%); transition:background 3s ease; pointer-events:none; }
+#morning-sun { position:absolute; left:50%; bottom:-60px; width:100px; height:100px; border-radius:50%; transform:translateX(-50%); background:radial-gradient(circle,rgba(255,220,100,0.9) 0%,rgba(255,140,30,0.6) 50%,rgba(255,80,0,0) 100%); opacity:0; transition:bottom 4s cubic-bezier(.2,.8,.4,1),opacity 3s ease; pointer-events:none; }
+#morning-sun::before { content:''; position:absolute; inset:-40px; border-radius:50%; background:radial-gradient(circle,rgba(255,180,40,0.15) 0%,transparent 70%); animation:rayPulse 2.5s ease-in-out infinite; }
+@keyframes rayPulse { 0%,100%{transform:scale(1);opacity:0.5} 50%{transform:scale(1.15);opacity:1} }
+#morning-skyline { position:absolute; bottom:0; left:0; right:0; height:28%; pointer-events:none; }
+#morning-stars { position:absolute; inset:0; z-index:1; pointer-events:none; }
+#morning-text { position:relative; z-index:10; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center; padding:0 40px; margin-top:18vh; }
+#morning-phase-label { font-size:0.58rem; letter-spacing:0.38em; text-transform:uppercase; color:rgba(255,255,255,0.2); opacity:0; transform:translateY(8px); transition:opacity 0.8s ease,transform 0.8s ease; }
+#morning-main-msg { font-family:'Caveat',cursive; font-weight:700; font-size:2.8rem; line-height:1.15; color:#fff; text-shadow:0 0 40px rgba(255,180,60,0.4),0 0 80px rgba(255,120,20,0.2); opacity:0; transform:translateY(14px); transition:opacity 1s ease 0.4s,transform 1s ease 0.4s; }
+#morning-sub-msg { font-family:'Rajdhani',sans-serif; font-size:0.88rem; letter-spacing:0.06em; line-height:1.7; color:rgba(255,255,255,0.3); max-width:360px; opacity:0; transform:translateY(10px); transition:opacity 0.8s ease 0.8s,transform 0.8s ease 0.8s; }
+#morning-day-badge { display:flex; align-items:center; gap:10px; padding:8px 22px; border:1px solid rgba(255,180,60,0.2); background:rgba(255,120,20,0.05); opacity:0; transition:opacity 0.8s ease 1s; }
+#morning-day-badge .badge-num { font-family:'Caveat',cursive; font-weight:700; font-size:1.8rem; color:rgba(255,180,60,0.9); text-shadow:0 0 12px rgba(255,140,20,0.6); line-height:1; }
+#morning-day-badge .badge-label { font-family:'Rajdhani',sans-serif; font-size:0.65rem; letter-spacing:0.22em; text-transform:uppercase; color:rgba(255,255,255,0.3); display:flex; flex-direction:column; gap:1px; }
+#morning-continue-btn { margin-top:8px; padding:11px 42px; background:transparent; border:1px solid rgba(255,255,255,0.12); font-family:'Special Elite',cursive; font-size:0.72rem; letter-spacing:0.22em; text-transform:uppercase; color:rgba(255,255,255,0.3); cursor:pointer; opacity:0; transition:opacity 0.8s ease 1.4s,color 0.2s,border-color 0.2s,box-shadow 0.2s; }
+#morning-continue-btn.visible { opacity:1; }
+#morning-continue-btn:hover { color:#fff; border-color:rgba(255,200,80,0.6); box-shadow:0 0 18px rgba(255,160,40,0.2); }
+.morning-phase-1 #morning-sky { background:linear-gradient(180deg,#000510 0%,#0a0520 35%,#1a0820 65%,#3a1505 100%); }
+.morning-phase-2 #morning-sky { background:linear-gradient(180deg,#020818 0%,#0d1035 30%,#2a1010 55%,#5a2008 80%,#8a3a08 100%); }
+.morning-phase-3 #morning-sky { background:linear-gradient(180deg,#060d22 0%,#101840 28%,#301820 50%,#7a3010 72%,#c05010 88%,#e07020 100%); }
+.morning-phase-4 #morning-sky { background:linear-gradient(180deg,#0d1832 0%,#182250 25%,#402010 48%,#a04818 68%,#e07820 82%,#f0a030 100%); }
+
+/* ══ VICTORY SCREENS ══ */
+#page-victory { background:#010409; }
+#particle-canvas { position:fixed; inset:0; pointer-events:none; z-index:0; }
+.victory-card { position:relative; z-index:5; display:flex; flex-direction:column; align-items:center; padding:52px 64px 44px; background:rgba(4,7,15,0.92); border:1px solid rgba(255,255,255,0.08); max-width:520px; width:90%; animation:cardIn 0.9s cubic-bezier(.22,1,.36,1) forwards; }
+@keyframes cardIn { from{opacity:0;transform:translateY(40px) scale(0.96)} to{opacity:1;transform:none} }
+.victory-eyebrow { font-size:0.6rem; letter-spacing:0.35em; text-transform:uppercase; color:rgba(255,255,255,0.3); margin-bottom:18px; animation:fadeUp 0.7s ease 0.2s both; }
+.victory-icon { margin-bottom:24px; animation:fadeUp 0.7s ease 0.35s both; }
+.victory-title { font-family:'Caveat',cursive; font-weight:700; font-size:3.6rem; line-height:1; text-align:center; margin-bottom:10px; animation:fadeUp 0.7s ease 0.45s both; }
+.victory-subtitle { font-family:'Rajdhani',sans-serif; font-size:0.95rem; letter-spacing:0.06em; text-align:center; line-height:1.7; color:rgba(255,255,255,0.45); max-width:340px; margin-bottom:36px; animation:fadeUp 0.7s ease 0.55s both; }
+.victory-divider { width:60px; height:1px; margin-bottom:28px; animation:fadeUp 0.7s ease 0.6s both; }
+.victory-players { width:100%; display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:36px; animation:fadeUp 0.7s ease 0.65s both; }
+.vp-chip { display:flex; align-items:center; gap:7px; padding:6px 14px; border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.03); font-family:'Rajdhani',sans-serif; font-size:0.82rem; font-weight:600; letter-spacing:0.04em; color:rgba(255,255,255,0.7); }
+.vp-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.victory-btn { padding:12px 44px; background:transparent; font-family:'Special Elite',cursive; font-size:0.75rem; letter-spacing:0.25em; text-transform:uppercase; cursor:pointer; transition:all 0.15s; animation:fadeUp 0.7s ease 0.75s both; }
+#vic-wolves .victory-card { border-color:rgba(239,68,68,0.2); box-shadow:0 0 60px rgba(239,68,68,0.12),inset 0 0 80px rgba(80,0,0,0.12); }
+#vic-wolves .victory-title { color:#ef4444; text-shadow:0 0 30px rgba(239,68,68,0.7),0 0 60px rgba(180,30,30,0.4); }
+#vic-wolves .victory-divider { background:rgba(239,68,68,0.5); }
+#vic-wolves .vp-dot { background:#ef4444; box-shadow:0 0 6px rgba(239,68,68,0.8); }
+#vic-wolves .victory-btn { border:1px solid rgba(239,68,68,0.4); color:rgba(239,68,68,0.8); }
+#vic-wolves .victory-btn:hover { border-color:rgba(239,68,68,0.9); color:#fff; box-shadow:0 0 18px rgba(239,68,68,0.3); }
+#vic-wolves .victory-eyebrow { color:rgba(239,68,68,0.5); }
+#vic-village .victory-card { border-color:rgba(100,180,255,0.15); box-shadow:0 0 60px rgba(80,140,255,0.1),inset 0 0 80px rgba(10,30,80,0.12); }
+#vic-village .victory-title { color:#e0eeff; text-shadow:0 0 30px rgba(150,200,255,0.6),0 0 60px rgba(80,140,255,0.3); }
+#vic-village .victory-divider { background:rgba(150,200,255,0.4); }
+#vic-village .vp-dot { background:#60b0ff; box-shadow:0 0 6px rgba(80,160,255,0.8); }
+#vic-village .victory-btn { border:1px solid rgba(100,180,255,0.35); color:rgba(150,210,255,0.8); }
+#vic-village .victory-btn:hover { border-color:rgba(150,210,255,0.9); color:#fff; box-shadow:0 0 18px rgba(80,160,255,0.25); }
+#vic-village .victory-eyebrow { color:rgba(150,200,255,0.5); }
+
+
+/* ══ VOTING OVERLAY ══ */
+#vote-overlay { display:none; position:fixed; inset:0; z-index:150; background:rgba(1,4,9,0.92); flex-direction:column; align-items:center; justify-content:center; gap:14px; animation:pgIn 0.3s ease; }
+#vote-overlay.open { display:flex; }
+#vote-header { display:flex; flex-direction:column; align-items:center; gap:6px; }
+#vote-title { font-size:0.62rem; letter-spacing:0.38em; text-transform:uppercase; color:rgba(255,255,255,0.3); }
+#vote-subtitle { font-family:'Caveat',cursive; font-weight:700; font-size:2rem; color:#fff; text-shadow:0 0 20px rgba(239,68,68,0.4); }
+#vote-tally-label { font-size:0.58rem; letter-spacing:0.25em; text-transform:uppercase; color:rgba(255,255,255,0.2); }
+#vote-list { display:flex; flex-direction:column; gap:7px; width:min(440px,88%); max-height:55vh; overflow-y:auto; padding:2px 4px; scrollbar-width:thin; scrollbar-color:rgba(239,68,68,0.2) transparent; }
+.vote-row { display:flex; align-items:center; gap:12px; padding:11px 16px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.02); cursor:pointer; transition:all 0.15s; position:relative; overflow:hidden; }
+.vote-row:hover { border-color:rgba(239,68,68,0.5); background:rgba(239,68,68,0.06); }
+.vote-row.voted-for { border-color:rgba(239,68,68,0.7); background:rgba(239,68,68,0.1); box-shadow:0 0 14px rgba(239,68,68,0.15); }
+.vote-row.is-you { opacity:0.3; cursor:not-allowed; pointer-events:none; }
+.vote-row .vr-name { font-family:'Rajdhani',sans-serif; font-size:0.96rem; font-weight:600; color:rgba(255,255,255,0.85); flex:1; }
+.vote-row .vr-count { font-family:'Caveat',cursive; font-size:1.4rem; font-weight:700; color:rgba(239,68,68,0.7); min-width:28px; text-align:right; line-height:1; }
+.vote-row .vr-bar { position:absolute; left:0; top:0; bottom:0; background:rgba(239,68,68,0.07); transition:width 0.4s ease; pointer-events:none; }
+.vote-row .vr-you-tag { font-size:0.52rem; letter-spacing:0.15em; text-transform:uppercase; color:rgba(239,68,68,0.7); border:1px solid rgba(239,68,68,0.3); padding:2px 7px; }
+#vote-progress { font-family:'Rajdhani',sans-serif; font-size:0.78rem; color:rgba(255,255,255,0.3); letter-spacing:0.08em; }
+#vote-skip-btn { margin-top:4px; padding:8px 32px; background:transparent; border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.25); font-family:'Special Elite',cursive; font-size:0.65rem; letter-spacing:0.2em; text-transform:uppercase; cursor:pointer; transition:all 0.2s; }
+#vote-skip-btn:hover { border-color:rgba(255,255,255,0.3); color:rgba(255,255,255,0.6); }
+#vote-skip-btn:disabled { opacity:0.3; pointer-events:none; }
+#vote-result-banner { display:none; position:fixed; top:0; left:0; right:0; z-index:160; padding:16px 24px; background:#000; border-bottom:1px solid rgba(239,68,68,0.3); flex-direction:column; align-items:center; gap:4px; animation:pgIn 0.3s ease; }
+#vote-result-banner.show { display:flex; }
+#vote-result-banner .vrb-main { font-family:'Caveat',cursive; font-weight:700; font-size:1.5rem; color:#fff; text-align:center; }
+#vote-result-banner .vrb-sub { font-family:'Rajdhani',sans-serif; font-size:0.75rem; color:rgba(255,255,255,0.35); letter-spacing:0.1em; }
+
+/* ══ SHARED ANIMATIONS ══ */
+@keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
+@keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+@keyframes bowFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+@keyframes arrowSlide { 0%{left:-100%} 100%{left:100%} }
+.sl { fill:none; stroke-linecap:round; stroke-linejoin:round; }
+.sq-panel { background:var(--navy); }
+.p9-enter h2 { font-size:2.3rem; letter-spacing:0.04em; }
+</style>
+</head>
+<body>
+
+<!-- Stars (for night screens) -->
+<canvas id="stars-canvas"></canvas>
+<!-- Particles (for victory) -->
+<canvas id="particle-canvas"></canvas>
+
+<!-- ══════════════════════════════════════
+     PAGE 01 — MAIN MENU
+══════════════════════════════════════ -->
+<div id="page01" class="page active">
+  <div class="frame sq" id="f01">
+    <canvas class="bc" id="bc-f01"></canvas>
+    <div class="header">
+      <span class="header-title">The Masquerade of Shadows</span>
+      <span class="page-num">#01</span>
+    </div>
+    <div class="content">
+      <div class="left-col">
+        <div class="art-block sq" id="bc-art-wrap">
+          <canvas class="bc" id="bc-art"></canvas>
+          <div class="mini-cards-wrap">
+            <div class="mini-card" style="color:#ef4444">
+              <svg viewBox="0 0 130 148" fill="none" stroke="#ef4444" stroke-linecap="round" stroke-linejoin="round"><circle cx="65" cy="16" r="12" stroke-width="2.2"/><circle cx="65" cy="16" r="7" stroke-width="1.4"/><path d="M60,28 L60,36 M70,28 L70,36" stroke-width="2.2"/><path d="M58,36 L58,72 L72,72 L72,36 Z" stroke-width="2.2"/><path d="M58,42 L72,42 M58,48 L72,48 M58,54 L72,54 M58,60 L72,60 M58,66 L72,66" stroke-width="1.1" opacity="0.6"/><path d="M58,72 L40,80 L48,86 L58,80" stroke-width="2.2"/><path d="M72,72 L90,80 L82,86 L72,80" stroke-width="2.2"/><path d="M58,80 L72,80" stroke-width="2.2"/><path d="M58,80 L65,144 L72,80" stroke-width="2.2"/><path d="M65,84 L65,140" stroke-width="1.0" opacity="0.5"/></svg>
+              <div class="mini-card-name" style="color:#ef4444">Wolf</div>
+            </div>
+            <div class="mini-card" style="color:#a855f7">
+              <svg viewBox="0 0 130 145" fill="none" class="sl" stroke="#a855f7"><circle cx="65" cy="105" r="38" stroke-width="1.9"/><path d="M54,67 L54,44 M76,67 L76,44" stroke-width="2"/><path d="M54,67 C52,72 46,78 36,84" stroke-width="1.4"/><path d="M76,67 C78,72 84,78 94,84" stroke-width="1.4"/><path d="M50,44 L50,22 L80,22 L80,44Z" stroke-width="1.8"/><path d="M52,28 L78,28 M52,33 L78,33 M52,38 L78,38" stroke-width="0.8" opacity="0.45"/><path d="M28,108 C35,103 95,103 102,108" stroke-width="1.3" opacity="0.6"/></svg>
+              <div class="mini-card-name" style="color:#a855f7">Witch</div>
+            </div>
+            <div class="mini-card" style="color:#22c55e">
+              <svg viewBox="0 0 130 145" fill="none" stroke="#22c55e" stroke-linecap="round" stroke-linejoin="round"><path d="M58,8 C78,20 86,44 86,72 C86,100 78,124 58,136" stroke-width="3.5" stroke-linecap="butt"/><path d="M58,8 L30,72 L58,136" stroke-width="1.4"/><path d="M8,72 L122,72" stroke-width="2.0"/><path d="M122,72 L112,66 L112,78 Z" stroke-width="1.8" fill="#22c55e" opacity="0.9"/><path d="M8,72 L16,64 M8,72 L16,80" stroke-width="2.0"/></svg>
+              <div class="mini-card-name" style="color:#22c55e">Hunter</div>
+            </div>
+            <div class="mini-card" style="color:#06b6d4">
+              <svg viewBox="0 0 130 145" fill="none" class="sl" stroke="#06b6d4"><path d="M8,68 C20,40 45,25 65,24 C85,25 110,40 122,68" stroke-width="2"/><path d="M8,68 C20,96 45,111 65,112 C85,111 110,96 122,68" stroke-width="2"/><circle cx="65" cy="68" r="22" stroke-width="1.6"/><circle cx="65" cy="68" r="9" stroke-width="1.4"/><circle cx="65" cy="68" r="5" fill="#06b6d4" stroke="none" opacity="0.5"/><circle cx="69" cy="64" r="2.5" fill="white" stroke="none" opacity="0.7"/></svg>
+              <div class="mini-card-name" style="color:#06b6d4">Seeker</div>
+            </div>
+            <div class="mini-card" style="color:#94a3b8">
+              <svg viewBox="0 0 130 145" fill="none" class="sl" stroke="#94a3b8"><circle cx="65" cy="22" r="18" stroke-width="1.8"/><path d="M48,14 C50,6 58,2 65,2 C72,2 80,6 82,14" stroke-width="1.5"/><path d="M57,52 C48,52 36,58 30,66 L28,85 L36,86 L38,72 L38,120 L92,120 L92,72 L94,86 L102,85 L100,66 C94,58 82,52 73,52Z" stroke-width="1.8"/><path d="M57,52 L65,64 L73,52" stroke-width="1.2"/><path d="M48,120 L44,142 M82,120 L86,142" stroke-width="1.6"/></svg>
+              <div class="mini-card-name" style="color:#94a3b8">Villager</div>
+            </div>
+            <div class="mini-card" style="color:#f59e0b">
+              <svg viewBox="0 0 130 145" fill="none" class="sl" stroke="#f59e0b"><path d="M8,95 L8,110 C8,116 12,120 18,120 L112,120 C118,120 122,116 122,110 L122,95Z" stroke-width="2"/><path d="M8,95 L18,58 L28,95 M28,95 L42,42 L56,95 M47,95 L65,16 L83,95 M74,95 L88,42 L102,95 M102,95 L112,58 L122,95" stroke-width="1.8"/><circle cx="65" cy="24" r="10" stroke-width="1.6"/><circle cx="65" cy="24" r="3" fill="#f59e0b" stroke="none" opacity="0.7"/><text x="93" y="141" font-family="Caveat" font-weight="700" font-size="13" fill="#f59e0b" stroke="none" opacity="0.9">×2</text></svg>
+              <div class="mini-card-name" style="color:#f59e0b">Leader</div>
+            </div>
+          </div>
+          <div style="width:100%;padding:0 12px 14px;display:flex;flex-direction:column;gap:6px;position:relative;z-index:5;">
+            <label style="font-family:'Special Elite',cursive;font-size:0.55rem;letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,0.3);display:block;">Your Name</label>
+            <input id="player-name-input" type="text" maxlength="16" placeholder="Enter name..."
+              oninput="savePlayerName(this.value)"
+              style="background:rgba(255,255,255,0.04);border:none;border-bottom:1px solid rgba(80,140,255,0.5);outline:none;width:100%;padding:6px 4px;font-family:'Special Elite',cursive;font-size:1rem;letter-spacing:0.12em;color:#fff;text-shadow:0 0 8px rgba(80,160,255,0.7);caret-color:rgba(80,160,255,0.9);transition:border-color 0.2s,box-shadow 0.2s;"
+              onfocus="this.style.borderColor='rgba(80,160,255,0.9)';this.style.boxShadow='0 2px 10px rgba(60,120,255,0.3)'"
+              onblur="this.style.borderColor='rgba(80,140,255,0.5)';this.style.boxShadow='none'"/>
+          </div>
+        </div>
+        <div class="sq" id="bc-madeby-wrap" style="padding:12px;text-align:center;background:var(--navy);font-size:0.66rem;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase;">
+          <canvas class="bc" id="bc-madeby"></canvas>
+          Made By D4N
+        </div>
+      </div>
+      <div class="right-col">
+        <div class="menu-btn sq" id="btn-play" onclick="goTo('page02')"><canvas class="bc" id="bc-btn-play"></canvas><span class="mb-label">Play</span></div>
+        <div class="menu-btn sq" id="btn-htp" onclick="goTo('page03')"><canvas class="bc" id="bc-btn-htp"></canvas><span class="mb-label">How To Play</span></div>
+        <div class="menu-btn sq" id="btn-cred" onclick="goTo('page04')"><canvas class="bc" id="bc-btn-cred"></canvas><span class="mb-label">Credit</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE 02 ══ -->
+<div id="page02" class="page">
+  <div class="frame sq" id="f02">
+    <canvas class="bc" id="bc-f02"></canvas>
+    <div class="header"><span class="header-title"></span><span class="page-num">#02</span></div>
+    <div class="content" style="flex-direction:column;">
+      <div class="game-option-btn sq" id="btn-host" style="margin-bottom:10px;" onclick="hostGame()"><canvas class="bc" id="bc-btn-host"></canvas><span class="gob-label" id="host-btn-label">Host Game</span><span id="host-btn-dots" style="display:none;font-family:'Special Elite',cursive;font-size:1.05rem;letter-spacing:0.32em;color:rgba(255,255,255,0.6);position:relative;z-index:2;"></span></div>
+      <div class="game-option-btn sq" id="btn-join" onclick="goTo('page09')"><canvas class="bc" id="bc-btn-join"></canvas><span class="gob-label">Join Game</span></div>
+    </div>
+  </div>
+  <button class="back-btn" onclick="goTo('page01')">← Back</button>
+</div>
+
+<!-- ══ PAGE 03 ══ -->
+<div id="page03" class="page">
+  <div class="frame sq" id="f03">
+    <canvas class="bc" id="bc-f03"></canvas>
+    <div class="header"><span class="header-title"></span><span class="page-num">#03</span></div>
+    <div class="content" style="padding:0;gap:0;">
+      <div class="htp-left sq" id="bc-htpleft-wrap"><canvas class="bc" id="bc-htpleft"></canvas><div class="htp-title">HOW<br>TO<br>PLAY</div></div>
+      <div class="htp-right">
+        <div class="rules-heading">Game Rules</div>
+        <div class="rules-intro">Each player receives 1 of 5 possible cards. These cards are:</div>
+        <div class="role-block"><span class="role-tag r-wolf">Wolf</span> — Comes out at night to eliminate someone. Up to two wolves. If both pick the same target, that player is eliminated; if they disagree, it's 50/50.</div>
+        <div class="role-block"><span class="role-tag r-witch">Witch</span> — Two one-time abilities: save a victim after a night elimination, or eliminate one player of her choice.</div>
+        <div class="role-block"><span class="role-tag r-hunter">Hunter</span> — If voted out, the hunter takes one player down with them. Does not trigger if eliminated at night.</div>
+        <div class="role-block"><span class="role-tag r-seeker">Seeker</span> — Each night may secretly check one other player's role card.</div>
+        <div class="role-block" style="border-bottom:none;"><span class="role-tag r-vill">Villager</span> — A regular player with no special abilities.</div>
+        <div class="section-title">— Sub-Role —</div>
+        <div class="role-block"><span class="role-tag r-leader">Leader</span> — Awarded by vote. Vote counts as two. A wolf can become the leader.</div>
+        <div class="section-title">— Goal —</div>
+        <div class="goal-text">Innocents must vote out all wolves before it's too late.<br><br><strong>Wolves must eliminate all others until only wolves remain.</strong></div>
+      </div>
+    </div>
+  </div>
+  <button class="back-btn" onclick="goTo('page01')">← Back</button>
+</div>
+
+<!-- ══ PAGE 04 ══ -->
+<div id="page04" class="page">
+  <div class="frame sq" id="f04">
+    <canvas class="bc" id="bc-f04"></canvas>
+    <div class="header"><span class="header-title"></span><span class="page-num">#04</span></div>
+    <div class="content" style="flex-direction:column;">
+      <div class="credit-tag">Credits</div>
+      <div class="credit-body sq" id="bc-creditbody-wrap"><canvas class="bc" id="bc-creditbody"></canvas>
+        <div class="credit-text">This game was inspired by the popular social deduction card game "Mafia," where players<br>are secretly assigned roles and must work together to uncover hidden enemies<br>while trying to survive each round.<br><br><strong>Game Name: Dawn</strong><br><strong>Code &amp; UI: D4N</strong><br><br>Click the button below to view the playtesters who helped test the game.</div>
+      </div>
+      <div class="pt-row"><button class="pt-btn sq" id="btn-pt" onclick="goTo('page06')" style="position:relative;"><canvas class="bc" id="bc-btn-pt"></canvas>Play Testers</button></div>
+    </div>
+  </div>
+  <button class="back-btn" onclick="goTo('page01')">← Back</button>
+</div>
+
+<!-- ══ PAGE 06 ══ -->
+<div id="page06" class="page">
+  <div class="frame sq" id="f06">
+    <canvas class="bc" id="bc-f06"></canvas>
+    <div class="header"><span class="header-title">Thynk Unlimited</span><span class="page-num">#06</span></div>
+    <div class="content" style="flex-direction:row;">
+      <div style="flex:1;display:flex;flex-direction:column;gap:12px;">
+        <div class="sq" id="bc-p6title-wrap" style="flex:1;display:flex;align-items:center;justify-content:center;background:var(--navy);"><canvas class="bc" id="bc-p6title"></canvas><span style="font-size:2.6rem;letter-spacing:0.04em;text-transform:uppercase;">Play Testers</span></div>
+        <div class="sq" id="bc-p6desc-wrap" style="padding:16px 20px;background:var(--navy);"><canvas class="bc" id="bc-p6desc"></canvas><p style="font-family:'Rajdhani',sans-serif;font-size:0.84rem;color:var(--muted);line-height:1.7;">The ones that helped testing the game and finding bugs</p></div>
+      </div>
+      <div class="sq" id="bc-p6list-wrap" style="width:40%;display:flex;flex-direction:column;margin-left:12px;background:var(--navy);"><canvas class="bc" id="bc-p6list"></canvas>
+        <div style="border-bottom:1px solid rgba(255,255,255,0.08);padding:12px 18px;text-align:center;"><span style="font-size:0.65rem;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase;">User Aliases</span></div>
+        <div style="flex:1;padding:14px 18px;"><div style="font-family:'Rajdhani',sans-serif;font-size:1.05rem;color:rgba(255,255,255,0.82);">Og guy</div></div>
+      </div>
+    </div>
+  </div>
+  <button class="back-btn" onclick="goTo('page04')">← Back</button>
+</div>
+
+<!-- ══ PAGE 09 — JOIN GAME ══ -->
+<div id="page09" class="page">
+  <div class="frame sq" id="f09">
+    <canvas class="bc" id="bc-f09"></canvas>
+    <div class="header"><span class="header-title"></span><span class="page-num">#09</span></div>
+    <div class="content">
+      <div class="p9-main">
+        <div class="p9-enter"><h2>Enter Game Code</h2></div>
+        <div class="p9-hint">The code should look like this: <strong>A7KD2</strong></div>
+      </div>
+      <div class="p9-side">
+        <div id="join-loading" style="display:none;flex-direction:column;align-items:center;gap:14px;padding:20px;">
+          <div class="jl-dot"></div>
+          <span style="font-size:0.62rem;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,0.3);">Searching for room...</span>
+        </div>
+        <div id="join-form">
+          <div class="p9-code-box sq" id="bc-p9box-wrap" style="position:relative;">
+            <canvas class="bc" id="bc-p9box"></canvas>
+            <div class="p9-code-label">Room Code:</div>
+            <input class="p9-input" id="join-code-input" type="text" placeholder="enter here" maxlength="5"
+              oninput="this.value=this.value.toUpperCase()"
+              onkeydown="if(event.key==='Enter')submitJoinCode()"/>
+            <div id="join-error">Error: No room matches the code you provided. Error ID: #00001</div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button onclick="submitJoinCode()" style="flex:1;background:transparent;border:1px solid rgba(80,140,255,0.4);color:rgba(80,160,255,0.8);padding:10px;font-family:'Special Elite',cursive;font-size:0.72rem;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;transition:all 0.15s;" onmouseenter="this.style.color='#fff';this.style.borderColor='rgba(80,160,255,0.9)'" onmouseleave="this.style.color='rgba(80,160,255,0.8)';this.style.borderColor='rgba(80,140,255,0.4)'">Enter →</button>
+          </div>
+        </div>
+        <div class="p9-help">not working?<span>make sure the host copied the right code</span></div>
+      </div>
+    </div>
+  </div>
+  <button class="back-btn" onclick="goTo('page02')">← Back</button>
+</div>
+
+<!-- ══ PAGE LOBBY ══ -->
+<div id="pageLobby" class="page">
+  <div class="frame sq" id="f-lobby">
+    <canvas class="bc" id="bc-f-lobby"></canvas>
+    <div class="header">
+      <span class="header-title">Dawn · Lobby</span>
+      <span class="page-num" id="lobby-waiting" style="font-family:'Special Elite',cursive;font-size:0.75rem;letter-spacing:0.15em;color:rgba(255,255,255,0.45);animation:blink 1.8s steps(1) infinite;">Waiting for players...</span>
+    </div>
+    <div class="content" style="flex-direction:row;gap:12px;padding:14px 16px 80px;">
+      <div id="houses-grid" style="flex:1;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(3,1fr);gap:8px;"></div>
+      <div id="chat-panel" style="width:260px;flex-shrink:0;display:flex;flex-direction:column;border:1px solid rgba(255,255,255,0.1);background:#04070f;position:relative;">
+        <div id="chat-header" style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+          <span id="chat-phase-label" style="font-family:'Special Elite',cursive;font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.5);">Lobby Chat</span>
+          <span id="chat-phase-dot" style="width:7px;height:7px;border-radius:50%;background:rgba(80,220,120,0.8);box-shadow:0 0 6px rgba(80,220,120,0.8);display:inline-block;"></span>
+        </div>
+        <div id="chat-messages" style="flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px;scrollbar-width:thin;scrollbar-color:rgba(80,140,255,0.3) transparent;"></div>
+        <div id="chat-night-lock" style="display:none;position:absolute;inset:0;background:rgba(4,7,15,0.88);flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:10;">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="rgba(239,68,68,0.7)" stroke-width="1.5" stroke-linecap="round"><rect x="6" y="14" width="20" height="14" rx="3"/><path d="M10,14 L10,10 C10,5 22,5 22,10 L22,14"/><circle cx="16" cy="21" r="2.5" fill="rgba(239,68,68,0.5)" stroke="none"/></svg>
+          <span style="font-family:'Special Elite',cursive;font-size:0.62rem;letter-spacing:0.15em;color:rgba(239,68,68,0.7);text-align:center;line-height:1.6;">Wolves are<br>talking...</span>
+        </div>
+        <div id="chat-input-area" style="padding:8px 10px;border-top:1px solid rgba(255,255,255,0.08);display:flex;gap:6px;align-items:center;flex-shrink:0;">
+          <input id="chat-input" type="text" maxlength="120" placeholder="Say something..." onkeydown="if(event.key==='Enter')sendChat()" style="flex:1;background:rgba(255,255,255,0.04);border:none;border-bottom:1px solid rgba(80,140,255,0.4);outline:none;padding:5px 4px;font-family:'Special Elite',cursive;font-size:0.78rem;letter-spacing:0.05em;color:#fff;caret-color:rgba(80,160,255,0.9);"/>
+          <button onclick="sendChat()" style="background:transparent;border:1px solid rgba(80,140,255,0.4);color:rgba(80,160,255,0.8);padding:5px 10px;font-family:'Special Elite',cursive;font-size:0.65rem;letter-spacing:0.1em;cursor:pointer;transition:all 0.15s;" onmouseenter="this.style.borderColor='rgba(80,160,255,0.9)';this.style.color='#fff';this.style.boxShadow='0 0 8px rgba(60,120,255,0.4)'" onmouseleave="this.style.borderColor='rgba(80,140,255,0.4)';this.style.color='rgba(80,160,255,0.8)';this.style.boxShadow='none'">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM BAR -->
+    <div id="lobby-bottom" style="position:absolute;bottom:0;left:0;right:0;padding:14px 20px;background:#000;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.08);z-index:30;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <span style="font-size:0.62rem;letter-spacing:0.25em;text-transform:uppercase;color:rgba(255,255,255,0.4);">Room Code</span>
+        <span id="room-code-display" style="font-family:'Special Elite',cursive;font-size:1.6rem;letter-spacing:0.35em;color:#fff;text-shadow:0 0 12px rgba(80,160,255,0.9),0 0 30px rgba(60,120,255,0.5);">------</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span id="copy-msg" style="font-size:0.6rem;letter-spacing:0.15em;color:rgba(80,220,120,0.85);opacity:0;transition:opacity 0.3s;text-transform:uppercase;">Copied!</span>
+        <button onclick="copyCode()" style="background:transparent;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);padding:8px 20px;font-family:'Special Elite',cursive;font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;transition:all 0.15s;" onmouseenter="this.style.color='#fff';this.style.borderColor='rgba(255,255,255,0.6)'" onmouseleave="this.style.color='rgba(255,255,255,0.6)';this.style.borderColor='rgba(255,255,255,0.2)'">Copy Code</button>
+        <!-- SETTINGS BUTTON (between copy and start) -->
+        <button onclick="openSettings()" id="settings-lobby-btn" style="background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.4);padding:8px 18px;font-family:'Special Elite',cursive;font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;transition:all 0.15s;" onmouseenter="this.style.color='#fff';this.style.borderColor='rgba(255,255,255,0.5)'" onmouseleave="this.style.color='rgba(255,255,255,0.4)';this.style.borderColor='rgba(255,255,255,0.15)'">Settings</button>
+        <button id="start-game-btn" onclick="startGameSequence()" style="background:transparent;border:1px solid rgba(80,220,120,0.4);color:rgba(80,220,120,0.7);padding:8px 28px;font-family:'Special Elite',cursive;font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;transition:all 0.15s;" onmouseenter="this.style.color='rgba(80,255,140,1)';this.style.borderColor='rgba(80,220,120,0.9)';this.style.boxShadow='0 0 14px rgba(60,200,100,0.35)'" onmouseleave="this.style.color='rgba(80,220,120,0.7)';this.style.borderColor='rgba(80,220,120,0.4)';this.style.boxShadow='none'">Start Game</button>
+        <button onclick="goTo('page02')" style="background:transparent;border:1px solid rgba(255,60,60,0.3);color:rgba(255,100,100,0.6);padding:8px 20px;font-family:'Special Elite',cursive;font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;transition:all 0.15s;" onmouseenter="this.style.color='rgba(255,100,100,1)';this.style.borderColor='rgba(255,60,60,0.8)'" onmouseleave="this.style.color='rgba(255,100,100,0.6)';this.style.borderColor='rgba(255,60,60,0.3)'">Leave</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SETTINGS MODAL ══ -->
+<div id="settings-overlay">
+  <div id="settings-panel">
+    <div class="settings-header">
+      <span>Game Settings</span>
+      <button class="settings-close" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="settings-body">
+      <div class="setting-row">
+        <div class="setting-label"><span>Wolves</span><small>Number of wolves in the game</small></div>
+        <div class="setting-stepper">
+          <button class="step-btn" onclick="adjustSetting('wolfCount',-1)">−</button>
+          <span class="step-val" id="val-wolfCount">1</span>
+          <button class="step-btn" onclick="adjustSetting('wolfCount',1)">+</button>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label"><span>Max Players</span><small>6 minimum · 15 maximum</small></div>
+        <div class="setting-stepper">
+          <button class="step-btn" onclick="adjustSetting('maxPlayers',-1)">−</button>
+          <span class="step-val" id="val-maxPlayers">10</span>
+          <button class="step-btn" onclick="adjustSetting('maxPlayers',1)">+</button>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label"><span>Morning Duration</span><small>1 – 15 minutes</small></div>
+        <div class="setting-stepper">
+          <button class="step-btn" onclick="adjustSetting('morningDuration',-1)">−</button>
+          <span class="step-val" id="val-morningDuration">5</span>
+          <button class="step-btn" onclick="adjustSetting('morningDuration',1)">+</button>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label"><span>Night Duration</span><small>1 – 15 minutes</small></div>
+        <div class="setting-stepper">
+          <button class="step-btn" onclick="adjustSetting('nightDuration',-1)">−</button>
+          <span class="step-val" id="val-nightDuration">2</span>
+          <button class="step-btn" onclick="adjustSetting('nightDuration',1)">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="settings-footer">
+      <button class="settings-save-btn" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PRE-GAME COUNTDOWN ══ -->
+<div id="page-pregame" class="page">
+  <div class="frame" id="pregame-frame">
+    <canvas class="bc" id="bc-pregame" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:15;"></canvas>
+    <div id="pregame-num">5</div>
+    <div id="pregame-label">Game starting...</div>
+  </div>
+</div>
+
+<!-- ══ CARD PICK SCREEN ══ -->
+<div id="page-cardpick" class="page">
+  <div id="cardpick-frame" style="flex:1;display:flex;flex-direction:column;margin:12px;background:var(--navy);position:relative;overflow:hidden;">
+    <div id="cardpick-header">
+      <span>Choose Your Card</span>
+      <span id="cardpick-status">0 / 0 picked</span>
+    </div>
+    <div id="cards-area">
+      <div id="cards-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ROLE MESSAGE SCREEN ══ -->
+<div id="page-rolemsg" class="page">
+  <div class="frame" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+    <div id="rolemsg-content">
+      <span id="rolemsg-eyebrow">Your Role</span>
+      <div id="rolemsg-card-wrap"></div>
+      <div id="rolemsg-msg"></div>
+      <button id="rolemsg-continue" onclick="enterNightPhase()">I understand →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VOTE-OUT OVERLAY ══ -->
+<div id="voteout-overlay">
+  <span style="font-size:0.58rem;letter-spacing:0.35em;text-transform:uppercase;color:rgba(255,255,255,0.25);">Voted Out</span>
+  <div id="voteout-name"></div>
+  <div id="voteout-role"></div>
+  <div id="voteout-card-wrap"></div>
+  <button id="voteout-continue" onclick="closeVoteout()">Continue →</button>
+</div>
+
+<!-- ══════════════════════════════════════
+     NIGHT PHASE SCREENS
+══════════════════════════════════════ -->
+
+<!-- WOLF SCREEN -->
+<div id="screen-wolf" class="screen">
+  <div class="frame sq" id="f-wolf">
+    <canvas class="bc" id="bc-wolf"></canvas>
+    <div class="header">
+      <span class="header-title night-title">Night Phase — Wolf</span>
+      <div id="countdown-wrap">
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+          <span style="font-size:0.52rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);">Time Remaining</span>
+          <div id="countdown-bar-wrap"><div id="countdown-bar" style="width:100%"></div></div>
+        </div>
+        <span id="countdown-num">60</span>
+      </div>
+    </div>
+    <div class="night-body">
+      <div class="left-col">
+        <div class="role-reminder sq"><canvas class="bc" id="bc-wolf-role"></canvas>
+          <svg class="role-icon" viewBox="0 0 130 148" fill="none" stroke="#ef4444" stroke-linecap="round" stroke-linejoin="round"><circle cx="65" cy="16" r="12" stroke-width="2.2"/><circle cx="65" cy="16" r="7" stroke-width="1.4"/><path d="M60,28 L60,36 M70,28 L70,36" stroke-width="2.2"/><path d="M58,36 L58,72 L72,72 L72,36 Z" stroke-width="2.2"/><path d="M58,42 L72,42 M58,48 L72,48 M58,54 L72,54 M58,60 L72,60 M58,66 L72,66" stroke-width="1.1" opacity="0.6"/><path d="M58,72 L40,80 L48,86 L58,80" stroke-width="2.2"/><path d="M72,72 L90,80 L82,86 L72,80" stroke-width="2.2"/><path d="M58,80 L72,80" stroke-width="2.2"/><path d="M58,80 L65,144 L72,80" stroke-width="2.2"/><path d="M65,84 L65,140" stroke-width="1.0" opacity="0.5"/></svg>
+          <div class="role-info"><span class="role-label">Your Role</span><span class="role-name" style="color:#ef4444;text-shadow:0 0 10px rgba(239,68,68,0.7);">Wolf</span><span class="role-desc">Choose a player to eliminate tonight.<br>If two wolves disagree, it's 50/50.</span></div>
+        </div>
+        <div class="action-panel sq"><canvas class="bc" id="bc-wolf-action"></canvas>
+          <div class="ap-header"><span class="ap-title">Choose Your Target</span><span style="font-size:0.52rem;letter-spacing:0.1em;color:rgba(239,68,68,0.6);text-transform:uppercase;">Select 1</span></div>
+          <p class="ap-instruction">Click a player to mark them for elimination.</p>
+          <div class="player-list" id="wolf-player-list"></div>
+          <div class="confirm-btn" onclick="confirmWolfTarget()">Confirm Target</div>
+        </div>
+      </div>
+      <div class="right-col">
+        <div class="chat-wrap sq"><canvas class="bc" id="bc-wolf-chat"></canvas>
+          <div class="chat-hdr"><span class="chat-hdr-title wolf-chat-label">Wolf Pack · Night Chat</span><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="rgba(239,68,68,0.6)" stroke-width="1.3" stroke-linecap="round"><path d="M2,5 C2,2 12,2 12,5 L12,9 C12,11 10,12 7,12 L4,13 L4,11 C2,10 2,7 2,5Z"/></svg></div>
+          <div class="chat-msgs" id="wolf-chat-msgs"></div>
+          <div class="chat-input-row"><input type="text" id="wolf-chat-input" placeholder="Talk to your pack..." maxlength="120" onkeydown="if(event.key==='Enter')sendWolfMsg()"/><button onclick="sendWolfMsg()">Send</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WITCH SCREEN -->
+<div id="screen-witch" class="screen">
+  <div class="frame sq" id="f-witch">
+    <canvas class="bc" id="bc-witch"></canvas>
+    <div class="header">
+      <span class="header-title night-title" style="text-shadow:0 0 12px rgba(168,85,247,0.7),0 0 30px rgba(120,50,200,0.4);">Night Phase — Witch</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;"><span style="font-size:0.52rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);">Time Remaining</span><div style="width:90px;height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;"><div id="countdown-bar-w" style="height:100%;background:rgba(168,85,247,0.7);box-shadow:0 0 6px rgba(168,85,247,0.8);transition:width 1s linear;border-radius:2px;width:100%;"></div></div></div>
+        <span id="countdown-num-w" style="font-family:'Caveat',cursive;font-size:2rem;font-weight:700;color:#fff;text-shadow:0 0 14px rgba(168,85,247,0.9);min-width:48px;text-align:center;">60</span>
+      </div>
+    </div>
+    <div class="night-body">
+      <div class="left-col">
+        <div class="role-reminder sq"><canvas class="bc" id="bc-witch-role"></canvas>
+          <svg class="role-icon" viewBox="0 0 130 145" fill="none" stroke="#a855f7" stroke-linecap="round" stroke-linejoin="round"><circle cx="65" cy="105" r="38" stroke-width="1.9"/><path d="M54,67 L54,44 M76,67 L76,44" stroke-width="2"/><path d="M54,67 C52,72 46,78 36,84" stroke-width="1.4"/><path d="M76,67 C78,72 84,78 94,84" stroke-width="1.4"/><path d="M50,44 L50,22 L80,22 L80,44Z" stroke-width="1.8"/><path d="M52,28 L78,28 M52,33 L78,33 M52,38 L78,38" stroke-width="0.8" opacity="0.45"/><path d="M28,108 C35,103 95,103 102,108" stroke-width="1.3" opacity="0.6"/></svg>
+          <div class="role-info"><span class="role-label">Your Role</span><span class="role-name" style="color:#a855f7;text-shadow:0 0 10px rgba(168,85,247,0.7);">Witch</span><span class="role-desc">Save the victim tonight, or use your kill.<br>Each ability can only be used once.</span></div>
+        </div>
+        <div class="action-panel sq"><canvas class="bc" id="bc-witch-action"></canvas>
+          <div class="ap-header"><span class="ap-title">Choose Your Action</span></div>
+          <div class="witch-toggle"><button class="witch-mode-btn active-save" id="witch-save-btn" onclick="setWitchMode('save')">Save Victim</button><button class="witch-mode-btn" id="witch-kill-btn" onclick="setWitchMode('kill')">Use Kill</button></div>
+          <p class="ap-instruction" id="witch-instruction">The wolf's victim is highlighted. Save them?</p>
+          <div class="player-list" id="witch-player-list"></div>
+          <div class="confirm-btn green" id="witch-confirm-btn" onclick="confirmWitchAction()">Confirm Save</div>
+        </div>
+      </div>
+      <div class="right-col">
+        <div class="night-lock-box sq"><canvas class="bc" id="bc-witch-lock"></canvas><svg width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="rgba(168,85,247,0.5)" stroke-width="1.5" stroke-linecap="round"><path d="M7,12 C7,5 29,5 29,12 L29,18"/><rect x="4" y="18" width="28" height="14" rx="4"/><circle cx="18" cy="25" r="3" fill="rgba(168,85,247,0.4)" stroke="none"/></svg><span style="color:rgba(168,85,247,0.4);">The village<br>sleeps in silence</span></div>
+        <div class="status-box sq"><canvas class="bc" id="bc-witch-status"></canvas>
+          <span class="sb-label">Abilities Remaining</span>
+          <div style="display:flex;gap:16px;margin-top:4px;">
+            <div style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:rgba(80,220,120,0.8);box-shadow:0 0 6px rgba(80,220,120,0.7);display:inline-block;"></span><span class="sb-val" id="witch-save-status" style="font-size:0.88rem;">Save ✓</span></div>
+            <div style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:rgba(239,68,68,0.8);box-shadow:0 0 6px rgba(239,68,68,0.7);display:inline-block;"></span><span class="sb-val" id="witch-kill-status" style="font-size:0.88rem;">Kill ✓</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WITCH WAIT SCREEN -->
+<div id="screen-witch-wait" class="screen">
+  <div class="frame sq" id="f-witch-wait">
+    <canvas class="bc" id="bc-witch-wait"></canvas>
+    <div class="header">
+      <span class="header-title" style="color:rgba(255,255,255,0.5);font-size:0.72rem;letter-spacing:0.22em;text-transform:uppercase;">Dawn · Night Phase</span>
+      <div style="display:flex;align-items:center;gap:7px;font-family:'Rajdhani',sans-serif;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(168,85,247,0.7);"><div style="width:7px;height:7px;border-radius:50%;background:rgba(168,85,247,0.85);box-shadow:0 0 8px rgba(168,85,247,0.8);animation:pulseDot 1.4s ease-in-out infinite;"></div>Wolves are hunting</div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:32px 36px;">
+      <div style="font-family:'Caveat',cursive;font-weight:700;font-size:2rem;line-height:1.25;text-align:center;color:#fff;text-shadow:0 0 20px rgba(168,85,247,0.4);">The wolves hunt<br>in darkness...</div>
+      <div style="font-family:'Rajdhani',sans-serif;font-size:0.88rem;letter-spacing:0.06em;text-align:center;line-height:1.7;color:rgba(255,255,255,0.35);max-width:320px;">Your powers stir but must wait. Once the wolves have chosen their prey, you will be called upon.</div>
+      <div style="width:100%;height:2px;background:rgba(255,255,255,0.06);position:relative;overflow:hidden;"><div style="position:absolute;top:0;left:-100%;height:100%;width:100%;background:linear-gradient(90deg,transparent,rgba(168,85,247,0.7),transparent);animation:arrowSlide 2s ease-in-out infinite;"></div></div>
+      <div style="font-family:'Caveat',cursive;font-size:1.1rem;color:rgba(255,255,255,0.2);letter-spacing:0.3em;">· · · · ·</div>
+    </div>
+  </div>
+</div>
+
+<!-- SEEKER SCREEN -->
+<div id="screen-seeker" class="screen">
+  <div class="frame sq" id="f-seeker">
+    <canvas class="bc" id="bc-seeker"></canvas>
+    <div class="header">
+      <span class="header-title night-title" style="text-shadow:0 0 12px rgba(6,182,212,0.7),0 0 30px rgba(0,140,180,0.4);">Night Phase — Seeker</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;"><span style="font-size:0.52rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);">Time Remaining</span><div style="width:90px;height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;"><div id="countdown-bar-s" style="height:100%;background:rgba(6,182,212,0.7);box-shadow:0 0 6px rgba(6,182,212,0.8);transition:width 1s linear;border-radius:2px;width:100%;"></div></div></div>
+        <span id="countdown-num-s" style="font-family:'Caveat',cursive;font-size:2rem;font-weight:700;color:#fff;text-shadow:0 0 14px rgba(6,182,212,0.9);min-width:48px;text-align:center;">60</span>
+      </div>
+    </div>
+    <div class="night-body">
+      <div class="left-col">
+        <div class="role-reminder sq"><canvas class="bc" id="bc-seeker-role"></canvas>
+          <svg class="role-icon" viewBox="0 0 130 145" fill="none" stroke="#06b6d4" stroke-linecap="round" stroke-linejoin="round"><path d="M8,68 C20,40 45,25 65,24 C85,25 110,40 122,68" stroke-width="2"/><path d="M8,68 C20,96 45,111 65,112 C85,111 110,96 122,68" stroke-width="2"/><circle cx="65" cy="68" r="22" stroke-width="1.6"/><circle cx="65" cy="68" r="9" stroke-width="1.4"/><circle cx="65" cy="68" r="5" fill="#06b6d4" stroke="none" opacity="0.5"/><circle cx="69" cy="64" r="2.5" fill="white" stroke="none" opacity="0.7"/></svg>
+          <div class="role-info"><span class="role-label">Your Role</span><span class="role-name" style="color:#06b6d4;text-shadow:0 0 10px rgba(6,182,212,0.7);">Seeker</span><span class="role-desc">Choose one player to reveal their role.<br>Only you will see the result.</span></div>
+        </div>
+        <div class="action-panel sq"><canvas class="bc" id="bc-seeker-action"></canvas>
+          <div class="ap-header"><span class="ap-title">Reveal a Player's Role</span><span style="font-size:0.52rem;letter-spacing:0.1em;color:rgba(6,182,212,0.6);text-transform:uppercase;">Select 1</span></div>
+          <p class="ap-instruction">Click a player to check their role card.</p>
+          <div class="player-list" id="seeker-player-list"></div>
+          <div id="seeker-reveal-box" class="reveal-box"><span class="reveal-label">Role Revealed</span><span id="reveal-role-name" class="reveal-role" style="color:#06b6d4;">—</span></div>
+          <div class="confirm-btn cyan" onclick="confirmSeekerCheck()">Confirm Check</div>
+        </div>
+      </div>
+      <div class="right-col">
+        <div class="night-lock-box sq"><canvas class="bc" id="bc-seeker-lock"></canvas><svg width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="rgba(6,182,212,0.5)" stroke-width="1.5" stroke-linecap="round"><circle cx="18" cy="18" r="10"/><circle cx="18" cy="18" r="4" fill="rgba(6,182,212,0.3)" stroke="none"/><path d="M18,4 L18,8 M18,28 L18,32 M4,18 L8,18 M28,18 L32,18"/></svg><span style="color:rgba(6,182,212,0.4);">Your sight cuts<br>through the dark</span></div>
+        <div class="status-box sq"><canvas class="bc" id="bc-seeker-status"></canvas><span class="sb-label">Checks Used Tonight</span><span class="sb-val" id="seeker-check-count" style="color:#06b6d4;text-shadow:0 0 8px rgba(6,182,212,0.6);">0 / 1</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLEEP SCREEN (Villager/Hunter/Leader) -->
+<div id="screen-sleep" class="screen">
+  <div class="frame sq" id="f-sleep">
+    <canvas class="bc" id="bc-sleep"></canvas>
+    <div class="header">
+      <span class="header-title" style="color:rgba(255,255,255,0.3);letter-spacing:0.2em;text-transform:uppercase;font-size:0.85rem;">Night Phase</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;"><span style="font-size:0.52rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.2);">Night ends in</span><div style="width:90px;height:2px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;"><div id="countdown-bar-sl" style="height:100%;background:rgba(255,255,255,0.2);transition:width 1s linear;border-radius:2px;width:100%;"></div></div></div>
+        <span id="countdown-num-sl" style="font-family:'Caveat',cursive;font-size:2rem;font-weight:700;color:rgba(255,255,255,0.25);min-width:48px;text-align:center;">60</span>
+      </div>
+    </div>
+    <div class="sleep-center">
+      <svg width="70" height="70" viewBox="0 0 70 70" fill="none" style="animation:sleepPulse 4s ease-in-out infinite;opacity:0.25"><path d="M35,8 C20,8 8,20 8,35 C8,50 20,62 35,62 C28,55 24,46 24,35 C24,20 30,10 40,6 C38,5 37,5 35,5Z" fill="rgba(200,200,255,0.6)"/><circle cx="38" cy="22" r="3" fill="rgba(200,200,255,0.3)"/><circle cx="28" cy="42" r="2" fill="rgba(200,200,255,0.25)"/></svg>
+      <div class="sleep-text">The village sleeps...</div>
+      <div style="display:flex;gap:18px;margin-top:4px;"><span class="zzz" style="animation-delay:0s">z</span><span class="zzz" style="animation-delay:0.7s;font-size:1.5rem;">z</span><span class="zzz" style="animation-delay:1.4s;font-size:0.9rem;">z</span></div>
+      <div class="sleep-sub">Something stirs in the dark.<br>Wait for dawn.</div>
+      <div style="margin-top:20px;padding:10px 20px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);display:flex;align-items:center;gap:12px;"><span style="font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.2);">Your Role</span><span id="sleep-role-name" style="font-family:'Caveat',cursive;font-size:1.1rem;font-weight:600;color:rgba(255,255,255,0.35);">Villager</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- HUNTER SCREEN -->
+<div id="screen-hunter" class="screen">
+  <div class="frame sq" id="f-hunter">
+    <canvas class="bc" id="bc-hunter"></canvas>
+    <div class="header">
+      <span class="header-title night-title" style="text-shadow:0 0 12px rgba(34,197,94,0.7),0 0 30px rgba(20,160,60,0.4);">Hunter — Last Shot</span>
+      <span style="font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.35);">You have been voted out</span>
+    </div>
+    <div class="night-body" style="flex-direction:column;align-items:center;gap:14px;">
+      <div style="width:100%;display:flex;gap:12px;flex-shrink:0;">
+        <div class="role-reminder sq" style="flex:0 0 auto;width:260px;"><canvas class="bc" id="bc-hunter-role"></canvas>
+          <svg class="role-icon" viewBox="0 0 130 145" fill="none" stroke="#22c55e" stroke-linecap="round" stroke-linejoin="round"><path d="M58,8 C78,20 86,44 86,72 C86,100 78,124 58,136" stroke-width="3.5" stroke-linecap="butt"/><path d="M58,8 L30,72 L58,136" stroke-width="1.4"/><path d="M8,72 L122,72" stroke-width="2.0"/><path d="M122,72 L112,66 L112,78 Z" stroke-width="1.8" fill="#22c55e" opacity="0.9"/><path d="M8,72 L16,64 M8,72 L16,80" stroke-width="2.0"/></svg>
+          <div class="role-info"><span class="role-label">Your Role</span><span class="role-name" style="color:#22c55e;text-shadow:0 0 10px rgba(34,197,94,0.7);">Hunter</span><span class="role-desc">You've been eliminated — but you don't go alone.<br>Take one player down with you.</span></div>
+        </div>
+        <div class="sq" style="flex:1;background:var(--navy);border:1px solid rgba(34,197,94,0.15);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;position:relative;"><canvas class="bc" id="bc-hunter-msg"></canvas>
+          <span style="font-family:'Caveat',cursive;font-size:1.5rem;font-weight:700;color:rgba(34,197,94,0.8);text-shadow:0 0 12px rgba(34,197,94,0.4);text-align:center;line-height:1.3;">The hunter falls...<br>but takes aim one last time.</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.3);text-align:center;letter-spacing:0.08em;">Choose your final target. Make it count.</span>
+        </div>
+      </div>
+      <div class="action-panel sq" style="width:100%;flex:1;"><canvas class="bc" id="bc-hunter-action"></canvas>
+        <div class="ap-header"><span class="ap-title" style="color:rgba(34,197,94,0.7);">Choose Who Goes Down With You</span><span style="font-size:0.52rem;letter-spacing:0.1em;color:rgba(34,197,94,0.5);text-transform:uppercase;">Select 1</span></div>
+        <p class="ap-instruction">You cannot target yourself. Choose wisely — this is your final action.</p>
+        <div class="player-list" id="hunter-player-list" style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:10px 12px;"></div>
+        <div class="confirm-btn" id="hunter-confirm-btn" onclick="confirmHunterTarget()" style="border-color:rgba(34,197,94,0.4);color:rgba(34,197,94,0.7);margin:10px 12px 12px;">Fire Last Arrow</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HUNTER WAIT SCREEN -->
+<div id="screen-hunter-wait" class="screen">
+  <div class="frame sq" id="f-hunter-wait">
+    <canvas class="bc" id="bc-hunter-wait"></canvas>
+    <div class="header">
+      <span class="header-title" style="color:rgba(255,255,255,0.5);font-size:0.72rem;letter-spacing:0.22em;text-transform:uppercase;">Dawn · Vote Result</span>
+      <div style="display:flex;align-items:center;gap:7px;font-family:'Rajdhani',sans-serif;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(34,197,94,0.7);"><div style="width:7px;height:7px;border-radius:50%;background:rgba(34,197,94,0.85);box-shadow:0 0 8px rgba(34,197,94,0.8);animation:pulseDot 1.4s ease-in-out infinite;"></div>Hunter is choosing</div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:32px 36px;">
+      <div style="font-family:'Caveat',cursive;font-weight:700;font-size:2rem;line-height:1.25;text-align:center;color:#fff;text-shadow:0 0 20px rgba(34,197,94,0.4);">The hunter has been<br>voted out...</div>
+      <div style="font-family:'Rajdhani',sans-serif;font-size:0.88rem;letter-spacing:0.06em;text-align:center;line-height:1.7;color:rgba(255,255,255,0.35);max-width:320px;">But they don't leave alone. The hunter is taking aim — one final arrow before they fall.</div>
+      <div style="width:100%;height:2px;background:rgba(255,255,255,0.06);position:relative;overflow:hidden;"><div style="position:absolute;top:0;left:-100%;height:100%;width:100%;background:linear-gradient(90deg,transparent,rgba(34,197,94,0.7),transparent);animation:arrowSlide 2s ease-in-out infinite;"></div></div>
+      <div style="font-family:'Caveat',cursive;font-size:1.1rem;color:rgba(255,255,255,0.2);letter-spacing:0.3em;">· · · · ·</div>
+    </div>
+  </div>
+</div>
+
+<!-- DEAD SCREEN -->
+<div id="screen-dead" class="screen">
+  <div class="frame sq" id="f-dead">
+    <canvas class="bc" id="bc-dead"></canvas>
+    <div class="header">
+      <span class="header-title" style="color:rgba(180,20,20,0.6);letter-spacing:0.2em;text-transform:uppercase;font-size:0.85rem;text-shadow:0 0 8px rgba(180,20,20,0.4);">Eliminated</span>
+      <div style="display:flex;align-items:center;gap:10px;"><div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;"><span style="font-size:0.52rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.2);">Night ends in</span><div style="width:90px;height:2px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;"><div id="countdown-bar-dead" style="height:100%;background:rgba(180,20,20,0.35);transition:width 1s linear;border-radius:2px;width:100%;"></div></div></div><span id="countdown-num-dead" style="font-family:'Caveat',cursive;font-size:2rem;font-weight:700;color:rgba(180,20,20,0.3);min-width:48px;text-align:center;">60</span></div>
+    </div>
+    <div class="sleep-center">
+      <svg width="70" height="70" viewBox="0 0 70 70" fill="none" style="animation:sleepPulse 4s ease-in-out infinite;opacity:0.22"><circle cx="35" cy="28" r="16" stroke="rgba(180,20,20,0.8)" stroke-width="1.4"/><circle cx="29" cy="26" r="3.5" fill="rgba(180,20,20,0.55)"/><circle cx="41" cy="26" r="3.5" fill="rgba(180,20,20,0.55)"/><path d="M29,34 L29,40 L35,40 L35,34 M35,34 L35,40 L41,40 L41,34" stroke="rgba(180,20,20,0.55)" stroke-width="1.2" stroke-linecap="round"/><path d="M18,50 L52,58 M52,50 L18,58" stroke="rgba(180,20,20,0.4)" stroke-width="1.5" stroke-linecap="round"/><circle cx="16" cy="49" r="3" fill="rgba(180,20,20,0.3)"/><circle cx="54" cy="49" r="3" fill="rgba(180,20,20,0.3)"/><circle cx="16" cy="59" r="3" fill="rgba(180,20,20,0.3)"/><circle cx="54" cy="59" r="3" fill="rgba(180,20,20,0.3)"/></svg>
+      <div class="sleep-text" style="color:rgba(180,20,20,0.55);">You have been eliminated.</div>
+      <div style="width:min(340px,90%);background:rgba(255,255,255,0.02);border:1px solid rgba(180,20,20,0.12);display:flex;flex-direction:column;margin-top:8px;max-height:180px;">
+        <div style="padding:6px 12px 5px;border-bottom:1px solid rgba(180,20,20,0.08);flex-shrink:0;display:flex;align-items:center;gap:8px;"><span style="font-size:0.52rem;letter-spacing:0.22em;text-transform:uppercase;color:rgba(180,20,20,0.45);">Ghost Chat</span><span style="font-family:'Rajdhani',sans-serif;font-size:0.65rem;color:rgba(255,255,255,0.12);">— only the dead can hear you</span></div>
+        <div id="dead-chat-msgs" style="flex:1;overflow-y:auto;padding:8px 12px;display:flex;flex-direction:column;gap:5px;scrollbar-width:thin;scrollbar-color:rgba(180,20,20,0.12) transparent;min-height:80px;"></div>
+        <div style="padding:6px 10px;border-top:1px solid rgba(180,20,20,0.08);display:flex;gap:6px;align-items:center;flex-shrink:0;">
+          <input type="text" id="dead-chat-input" placeholder="Speak to the fallen..." maxlength="120" style="flex:1;background:transparent;border:none;border-bottom:1px solid rgba(180,20,20,0.2);outline:none;padding:4px;font-family:'Special Elite',cursive;font-size:0.75rem;letter-spacing:0.04em;color:rgba(255,255,255,0.4);caret-color:rgba(180,20,20,0.6);" onkeydown="if(event.key==='Enter') sendDeadMsg()"/>
+          <button onclick="sendDeadMsg()" style="background:transparent;border:1px solid rgba(180,20,20,0.2);color:rgba(180,20,20,0.45);padding:4px 10px;font-family:'Special Elite',cursive;font-size:0.62rem;letter-spacing:0.1em;cursor:pointer;transition:all 0.15s;" onmouseenter="this.style.borderColor='rgba(180,20,20,0.7)';this.style.color='#fff'" onmouseleave="this.style.borderColor='rgba(180,20,20,0.2)';this.style.color='rgba(180,20,20,0.45)'">Send</button>
+        </div>
+      </div>
+      <div class="sleep-sub" style="color:rgba(180,20,20,0.25);margin-top:6px;">Your role has been revealed.<br>Wait for dawn.</div>
+      <div style="margin-top:16px;padding:10px 20px;border:1px solid rgba(180,20,20,0.1);background:rgba(180,20,20,0.03);display:flex;align-items:center;gap:12px;"><span style="font-size:0.55rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.15);">Your Role</span><span id="dead-role-display" style="font-family:'Caveat',cursive;font-size:1.1rem;font-weight:600;color:rgba(180,20,20,0.5);">Villager</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- MORNING SCREEN -->
+<div id="screen-morning" class="screen">
+  <canvas id="morning-stars"></canvas>
+  <div id="morning-sky"></div>
+  <div id="morning-horizon"></div>
+  <div id="morning-sun"></div>
+  <svg id="morning-skyline" viewBox="0 0 1440 100" preserveAspectRatio="xMidYMax slice" fill="#000" xmlns="http://www.w3.org/2000/svg"><path d="M0,100 L0,72 L8,72 L8,64 L14,64 L14,58 L18,58 L18,52 L22,52 L22,58 L26,58 L26,64 L30,64 L30,56 L34,52 L38,56 L42,56 L42,64 L46,64 L46,58 L50,54 L54,50 L58,54 L62,58 L66,58 L66,64 L70,64 L70,70 L78,70 L78,64 L82,58 L86,54 L90,58 L94,64 L98,64 L98,68 L106,68 L106,62 L110,56 L114,52 L118,56 L122,62 L128,62 L128,68 L136,68 L136,62 L140,58 L144,54 L148,58 L152,62 L156,62 L156,70 L162,70 L162,64 L166,60 L170,56 L174,60 L178,64 L182,64 L182,68 L190,68 L190,62 L194,58 L200,58 L200,64 L208,64 L208,70 L216,70 L216,64 L220,58 L224,54 L228,58 L232,62 L238,62 L238,70 L246,70 L246,64 L250,60 L254,56 L258,52 L262,56 L266,60 L270,64 L274,64 L274,70 L282,70 L282,64 L286,60 L290,56 L294,60 L298,64 L302,64 L302,70 L310,70 L310,64 L314,58 L318,54 L322,58 L326,64 L330,64 L330,68 L340,68 L340,62 L344,56 L348,52 L352,48 L356,52 L360,56 L364,62 L368,62 L368,68 L378,68 L378,62 L382,58 L386,54 L390,58 L394,62 L400,62 L400,70 L408,70 L408,64 L412,60 L416,56 L420,60 L424,64 L428,64 L428,70 L436,70 L436,62 L440,58 L444,54 L448,58 L452,62 L456,62 L456,68 L464,68 L464,62 L468,58 L472,54 L476,50 L480,54 L484,58 L488,62 L492,62 L492,68 L500,68 L500,62 L504,58 L508,54 L512,58 L516,62 L520,62 L520,70 L530,70 L530,64 L534,58 L538,54 L542,58 L546,64 L550,64 L550,70 L558,70 L558,64 L562,58 L566,54 L570,50 L574,54 L578,58 L582,62 L586,62 L586,68 L596,68 L596,62 L600,58 L604,54 L608,58 L612,62 L618,62 L618,70 L626,70 L626,64 L630,58 L634,52 L638,56 L642,62 L646,62 L646,70 L654,70 L654,64 L658,58 L662,54 L666,58 L670,62 L676,62 L676,70 L684,70 L684,64 L688,60 L692,56 L696,60 L700,64 L706,64 L706,70 L714,70 L714,64 L718,58 L722,54 L726,50 L730,54 L734,58 L738,62 L742,62 L742,70 L750,70 L750,64 L754,58 L758,54 L762,58 L766,64 L770,64 L770,70 L778,70 L778,62 L782,58 L786,54 L790,50 L794,54 L798,58 L802,62 L806,62 L806,68 L816,68 L816,62 L820,58 L824,54 L828,58 L832,62 L838,62 L838,68 L848,68 L848,62 L852,58 L856,54 L860,58 L864,62 L870,62 L870,70 L878,70 L878,64 L882,58 L886,52 L890,48 L894,52 L898,58 L902,64 L906,64 L906,70 L916,70 L916,64 L920,58 L924,54 L928,58 L932,64 L936,64 L936,70 L944,70 L944,64 L948,60 L952,56 L956,60 L960,64 L966,64 L966,70 L974,70 L974,64 L978,58 L982,54 L986,58 L990,62 L994,62 L994,70 L1002,70 L1002,64 L1006,58 L1010,54 L1014,50 L1018,54 L1022,58 L1026,62 L1030,62 L1030,68 L1040,68 L1040,62 L1044,58 L1048,54 L1052,58 L1056,62 L1060,62 L1060,70 L1070,70 L1070,64 L1074,58 L1078,54 L1082,58 L1086,64 L1090,64 L1090,70 L1100,70 L1100,64 L1104,60 L1108,56 L1112,52 L1116,56 L1120,60 L1124,64 L1128,64 L1128,70 L1138,70 L1138,62 L1142,58 L1146,54 L1150,58 L1154,62 L1158,62 L1158,70 L1168,70 L1168,64 L1172,58 L1176,52 L1180,48 L1184,52 L1188,58 L1192,64 L1196,64 L1196,70 L1206,70 L1206,64 L1210,58 L1214,54 L1218,58 L1222,62 L1228,62 L1228,70 L1236,70 L1236,64 L1240,60 L1244,56 L1248,60 L1252,64 L1258,64 L1258,70 L1266,70 L1266,64 L1270,60 L1274,56 L1278,52 L1282,56 L1286,60 L1290,64 L1294,64 L1294,70 L1302,70 L1302,64 L1306,58 L1310,54 L1314,58 L1318,64 L1322,64 L1322,70 L1332,70 L1332,62 L1336,58 L1340,54 L1344,58 L1348,62 L1354,62 L1354,70 L1362,70 L1362,64 L1366,60 L1370,56 L1374,60 L1378,64 L1382,64 L1382,70 L1390,70 L1390,64 L1394,60 L1398,56 L1402,60 L1406,64 L1410,64 L1410,70 L1420,70 L1420,64 L1424,58 L1428,54 L1432,58 L1436,64 L1440,64 L1440,100 Z"/></svg>
+  <div id="morning-text">
+    <span id="morning-phase-label">Night has ended</span>
+    <div id="morning-main-msg">Dawn breaks over<br>the village.</div>
+    <div id="morning-sub-msg">The night is over. Gather the village and find out what happened while you slept.</div>
+    <div id="morning-day-badge"><div class="badge-num" id="morning-day-num">2</div><div class="badge-label"><span>Day</span><span style="opacity:0.5">begins</span></div></div>
+    <button id="morning-continue-btn" onclick="endMorningTransition()">Enter Day Phase →</button>
+  </div>
+</div>
+
+<!-- ══ VICTORY SCREENS ══ -->
+<div id="page-victory" class="page">
+  <!-- Wolves win -->
+  <div id="vic-wolves" style="display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 80%,rgba(80,0,0,0.5) 0%,#010409 60%);">
+    <div class="victory-card">
+      <span class="victory-eyebrow">Game Over — Night Prevails</span>
+      <div class="victory-icon"><svg width="60" height="72" viewBox="0 0 130 148" fill="none" stroke="#ef4444" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 0 12px rgba(239,68,68,0.6))"><circle cx="65" cy="16" r="12" stroke-width="2.2"/><circle cx="65" cy="16" r="7" stroke-width="1.4"/><path d="M60,28 L60,36 M70,28 L70,36" stroke-width="2.2"/><path d="M58,36 L58,72 L72,72 L72,36 Z" stroke-width="2.2"/><path d="M58,72 L40,80 L48,86 L58,80" stroke-width="2.2"/><path d="M72,72 L90,80 L82,86 L72,80" stroke-width="2.2"/><path d="M58,80 L72,80 M58,80 L65,144 L72,80" stroke-width="2.2"/></svg></div>
+      <div class="victory-title">The Wolves Win</div>
+      <div class="victory-subtitle">Darkness has consumed the village. The wolves now rule over what remains.</div>
+      <div class="victory-divider"></div>
+      <div class="victory-players" id="wolf-winners"></div>
+      <button class="victory-btn" onclick="playAgain()">Play Again</button>
+      <button class="victory-btn" onclick="playAgain()" style="margin-top:8px;border-color:rgba(255,255,255,0.12);color:rgba(255,255,255,0.3);" onmouseenter="this.style.color='rgba(255,255,255,0.7)';this.style.borderColor='rgba(255,255,255,0.3)'" onmouseleave="this.style.color='rgba(255,255,255,0.3)';this.style.borderColor='rgba(255,255,255,0.12)'">Leave Game</button>
+    </div>
+  </div>
+  <!-- Village wins -->
+  <div id="vic-village" style="display:none;position:fixed;inset:0;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 80%,rgba(0,40,80,0.55) 0%,#010409 60%);">
+    <div class="victory-card">
+      <span class="victory-eyebrow">Game Over — Dawn Has Broken</span>
+      <div class="victory-icon"><svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="rgba(200,230,255,0.85)" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 0 12px rgba(150,200,255,0.5))"><circle cx="32" cy="32" r="12" stroke-width="1.8"/><line x1="32" y1="4" x2="32" y2="10" stroke-width="1.8"/><line x1="32" y1="54" x2="32" y2="60" stroke-width="1.8"/><line x1="4" y1="32" x2="10" y2="32" stroke-width="1.8"/><line x1="54" y1="32" x2="60" y2="32" stroke-width="1.8"/><line x1="11" y1="11" x2="15" y2="15" stroke-width="1.6"/><line x1="49" y1="49" x2="53" y2="53" stroke-width="1.6"/><line x1="53" y1="11" x2="49" y2="15" stroke-width="1.6"/><line x1="15" y1="49" x2="11" y2="53" stroke-width="1.6"/><circle cx="32" cy="32" r="5" fill="rgba(200,230,255,0.3)" stroke="none"/></svg></div>
+      <div class="victory-title">The Village Wins</div>
+      <div class="victory-subtitle">The wolves have been driven out. Peace returns to the village at last.</div>
+      <div class="victory-divider"></div>
+      <button class="victory-btn" onclick="playAgain()">Play Again</button>
+      <button class="victory-btn" onclick="playAgain()" style="margin-top:8px;border-color:rgba(255,255,255,0.12);color:rgba(255,255,255,0.3);" onmouseenter="this.style.color='rgba(255,255,255,0.7)';this.style.borderColor='rgba(255,255,255,0.3)'" onmouseleave="this.style.color='rgba(255,255,255,0.3)';this.style.borderColor='rgba(255,255,255,0.12)'">Leave Game</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════════════════════
+let currentCode   = '';
+let playerName    = 'Player';
+let playerRole    = null;
+let gamePhase     = 'lobby';
+let isPlayerDead  = false;
+let isHost        = false;
+let morningDay    = 1;
+const lobbyPlayers = new Array(15).fill(null);
+
+// Settings
+const settings = { wolfCount:1, maxPlayers:10, morningDuration:5, nightDuration:2 };
+const SETTING_LIMITS = {
+  wolfCount:      { min:1,  max:2  },
+  maxPlayers:     { min:6,  max:15 },
+  morningDuration:{ min:1,  max:15 },
+  nightDuration:  { min:1,  max:15 }
+};
+
+// Card pick state
+let myCardIndex    = null;
+let claimedCards   = new Set();
+let totalPlayers   = 0;
+let allPicked      = false;
+
+// Sample players (replace with socket data)
+const PLAYERS = [
+  { id:1,  name:'Shadow',     house:0,  isYou:false, role:'wolf',     alive:true },
+  { id:2,  name:'Raven',      house:1,  isYou:false, role:'villager', alive:true },
+  { id:3,  name:'You (Host)', house:2,  isYou:true,  role:'wolf',     alive:true },
+  { id:4,  name:'Ash',        house:3,  isYou:false, role:'witch',    alive:true },
+  { id:5,  name:'Ember',      house:4,  isYou:false, role:'seeker',   alive:true },
+  { id:6,  name:'Frost',      house:5,  isYou:false, role:'villager', alive:true },
+];
+
+const ROLE_COLORS = { wolf:'#ef4444', witch:'#a855f7', hunter:'#22c55e', seeker:'#06b6d4', villager:'#94a3b8', leader:'#f59e0b' };
+
+// ══════════════════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════════════════
+function goTo(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  setTimeout(resizeAll, 40);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) { el.classList.add('active'); setTimeout(resizeAll, 40); }
+}
+
+// ══════════════════════════════════════════════════════════
+//  LOBBY
+// ══════════════════════════════════════════════════════════
+function randCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let c = '';
+  for (let i=0; i<5; i++) c += chars[Math.floor(Math.random()*chars.length)];
+  return c;
+}
+
+function savePlayerName(val) { playerName = val.trim() || 'Player'; }
+
+function buildHousesGrid() {
+  const grid = document.getElementById('houses-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  for (let i=0; i<15; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'house-slot';
+    slot.id = 'house-' + i;
+    slot.innerHTML = `
+      <span class="house-num">#${String(i+1).padStart(2,'0')}</span>
+      <div class="avatar"><svg width="30" height="30" viewBox="0 0 30 30" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.2" stroke-linecap="round"><circle cx="15" cy="11" r="6"/><path d="M4,28 C4,20 26,20 26,28"/></svg></div>
+      <span class="empty-label">Empty</span>
+      <svg class="house-icon" width="28" height="22" viewBox="0 0 28 22" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2,10 L14,1 L26,10 L26,21 L2,21 Z"/><path d="M10,21 L10,14 L18,14 L18,21"/></svg>`;
+    grid.appendChild(slot);
+  }
+}
+
+function updateHouseSlot(index, pName, disconnected) {
+  const slot = document.getElementById('house-' + index);
+  if (!slot) return;
+  if (pName) {
+    slot.className = 'house-slot occupied' + (disconnected ? ' disconnected' : '');
+    slot.innerHTML = `
+      <span class="house-num">#${String(index+1).padStart(2,'0')}</span>
+      <div class="avatar"><svg width="30" height="30" viewBox="0 0 30 30" fill="none" stroke="${disconnected ? 'rgba(239,68,68,0.5)' : 'rgba(80,160,255,0.85)'}" stroke-width="1.4" stroke-linecap="round"><circle cx="15" cy="11" r="6"/><path d="M4,28 C4,20 26,20 26,28"/></svg></div>
+      <span class="player-name">${pName}${disconnected ? ' <span class="dc-badge">(D/C)</span>' : ''}</span>
+      <svg class="house-icon" width="28" height="22" viewBox="0 0 28 22" fill="none" stroke="${disconnected ? 'rgba(239,68,68,0.3)' : 'rgba(80,140,255,0.6)'}" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2,10 L14,1 L26,10 L26,21 L2,21 Z"/><path d="M10,21 L10,14 L18,14 L18,21"/></svg>`;
+  } else {
+    slot.className = 'house-slot';
+    slot.innerHTML = `
+      <span class="house-num">#${String(index+1).padStart(2,'0')}</span>
+      <div class="avatar"><svg width="30" height="30" viewBox="0 0 30 30" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.2" stroke-linecap="round"><circle cx="15" cy="11" r="6"/><path d="M4,28 C4,20 26,20 26,28"/></svg></div>
+      <span class="empty-label">Empty</span>
+      <svg class="house-icon" width="28" height="22" viewBox="0 0 28 22" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2,10 L14,1 L26,10 L26,21 L2,21 Z"/><path d="M10,21 L10,14 L18,14 L18,21"/></svg>`;
+  }
+}
+
+function hostGame() {
+  // Stub — overridden by socket client below
+  const n = (playerName || '').trim();
+  if (!n) { alert('Enter your name first.'); return; }
+  setHostLoading(true);
+}
+
+function setHostLoading(loading) {
+  const btn   = document.getElementById('btn-host');
+  const label = document.getElementById('host-btn-label');
+  const dots  = document.getElementById('host-btn-dots');
+  if (!btn || !label || !dots) return;
+  if (loading) {
+    label.style.display = 'none';
+    dots.style.display  = 'block';
+    btn.style.pointerEvents = 'none';
+    btn.style.opacity = '0.7';
+    // Animate the dots
+    let d = 0;
+    dots._interval = setInterval(() => {
+      d = (d + 1) % 4;
+      dots.textContent = 'Creating room' + '.'.repeat(d);
+    }, 400);
+    dots.textContent = 'Creating room';
+  } else {
+    clearInterval(dots._interval);
+    label.style.display = 'block';
+    dots.style.display  = 'none';
+    btn.style.pointerEvents = '';
+    btn.style.opacity = '';
+  }
+}
+
+function registerLobbyCanvas() {
+  if (!FRAME_IDS.has('bc-f-lobby')) FRAME_IDS.add('bc-f-lobby');
+  if (!seeds['bc-f-lobby']) seeds['bc-f-lobby'] = 99.9;
+  if (!ALL_IDS.includes('bc-f-lobby')) ALL_IDS.push('bc-f-lobby');
+}
+
+function copyCode() {
+  if (!currentCode) return;
+  navigator.clipboard.writeText(currentCode).catch(()=>{});
+  const msg = document.getElementById('copy-msg');
+  msg.style.opacity = '1';
+  setTimeout(() => { msg.style.opacity = '0'; }, 1800);
+}
+
+// ══════════════════════════════════════════════════════════
+//  JOIN GAME
+// ══════════════════════════════════════════════════════════
+let joinErrorTimeout = null;
+
+function submitJoinCode() {
+  const input = document.getElementById('join-code-input');
+  const code = input.value.trim().toUpperCase();
+  if (code.length < 5) return;
+
+  // Show loading
+  document.getElementById('join-form').style.display = 'none';
+  document.getElementById('join-loading').style.display = 'flex';
+
+  // Stub — overridden by socket client below
+}
+
+function showJoinError() {
+  const err = document.getElementById('join-error');
+  err.style.opacity = '1';
+  clearTimeout(joinErrorTimeout);
+  joinErrorTimeout = setTimeout(() => { err.style.opacity = '0'; }, 15000);
+}
+
+// ══════════════════════════════════════════════════════════
+//  SETTINGS
+// ══════════════════════════════════════════════════════════
+function openSettings() {
+  // Sync display
+  Object.keys(settings).forEach(k => {
+    const el = document.getElementById('val-' + k);
+    if (el) el.textContent = settings[k];
+  });
+  document.getElementById('settings-overlay').classList.add('open');
+}
+
+function closeSettings() { document.getElementById('settings-overlay').classList.remove('open'); }
+
+function adjustSetting(key, delta) {
+  const limits = SETTING_LIMITS[key];
+  settings[key] = Math.max(limits.min, Math.min(limits.max, settings[key] + delta));
+  const el = document.getElementById('val-' + key);
+  if (el) el.textContent = settings[key];
+}
+
+function saveSettings() { closeSettings(); }
+
+// ══════════════════════════════════════════════════════════
+//  PRE-GAME 5-SECOND COUNTDOWN → CARD PICK
+// ══════════════════════════════════════════════════════════
+function startGameSequence() {
+  goTo('page-pregame');
+  let count = 5;
+  const numEl = document.getElementById('pregame-num');
+  numEl.textContent = count;
+
+  const interval = setInterval(() => {
+    count--;
+    if (count <= 0) {
+      clearInterval(interval);
+      startCardPick();
+    } else {
+      numEl.textContent = count;
+      numEl.style.animation = 'none';
+      void numEl.offsetWidth;
+      numEl.style.animation = 'pregameNum 1s steps(1) infinite';
+    }
+  }, 1000);
+}
+
+// ══════════════════════════════════════════════════════════
+//  CARD PICK SYSTEM
+// ══════════════════════════════════════════════════════════
+const ROLE_CARD_DATA = {
+  wolf:     { color:'#ef4444', label:'W',  name:'Wolf',     sub:'Hunts at night',    artId:'wolf-art'     },
+  witch:    { color:'#a855f7', label:'Wi', name:'Witch',    sub:'Save or destroy',   artId:'witch-art'    },
+  hunter:   { color:'#22c55e', label:'H',  name:'Hunter',   sub:'Takes one down',    artId:'hunter-art'   },
+  seeker:   { color:'#06b6d4', label:'Se', name:'Seeker',   sub:'Sees in the dark',  artId:'seeker-art'   },
+  villager: { color:'#94a3b8', label:'V',  name:'Villager', sub:'No special power',  artId:'villager-art' },
+  leader:   { color:'#f59e0b', label:'L',  name:'Leader',   sub:'Double vote power', artId:'leader-art'   },
+};
+
+// Card back SVG (from dawn-cards.html)
+function cardBackSVG() {
+  return `<svg viewBox="0 0 220 330" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="bg" cx="50%" cy="40%" r="65%"><stop offset="0%" stop-color="#0d1528"/><stop offset="100%" stop-color="#05081a"/></radialGradient>
+      <radialGradient id="cg" cx="50%" cy="50%" r="45%"><stop offset="0%" stop-color="rgba(80,120,255,0.12)"/><stop offset="100%" stop-color="rgba(80,120,255,0)"/></radialGradient>
+    </defs>
+    <rect x="0" y="0" width="220" height="330" rx="14" fill="url(#bg)"/>
+    <rect x="0" y="0" width="220" height="330" rx="14" fill="url(#cg)"/>
+    <rect x="6" y="6" width="208" height="318" rx="12" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.6" stroke-dasharray="4 2"/>
+    <rect x="11" y="11" width="198" height="308" rx="10" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.8"/>
+    <g transform="translate(110, 148)">
+      <circle cx="0" cy="0" r="52" fill="rgba(180,180,255,0.04)"/>
+      <path d="M-6,-36 C-28,-32 -42,-16 -42,4 C-42,24 -28,40 -6,44 C-20,36 -30,22 -30,4 C-30,-14 -20,-28 -6,-36 Z" fill="rgba(200,210,240,0.72)" stroke="rgba(220,225,255,0.3)" stroke-width="0.8"/>
+      <circle cx="0" cy="0" r="40" fill="none" stroke="rgba(180,180,255,0.12)" stroke-width="1" stroke-dasharray="3 4"/>
+      <g stroke="rgba(255,255,255,0.1)" stroke-width="0.7" stroke-linecap="round"><line x1="0" y1="-44" x2="0" y2="-50"/><line x1="44" y1="0" x2="50" y2="0"/><line x1="0" y1="44" x2="0" y2="50"/><line x1="-44" y1="0" x2="-50" y2="0"/></g>
+    </g>
+    <text x="110" y="46" font-family="'Special Elite','Courier New',serif" font-size="6.5" letter-spacing="3.5" fill="rgba(255,255,255,0.22)" text-anchor="middle" dominant-baseline="middle">THE MASQUERADE OF SHADOWS</text>
+    <text x="110" y="284" font-family="'Special Elite','Courier New',serif" font-size="6.5" letter-spacing="3.5" fill="rgba(255,255,255,0.22)" text-anchor="middle" dominant-baseline="middle" transform="rotate(180,110,284)">THE MASQUERADE OF SHADOWS</text>
+    <rect x="0" y="0" width="220" height="330" rx="14" fill="none" stroke="rgba(0,0,0,0.4)" stroke-width="20"/>
+  </svg>`;
+}
+
+// Role card front art SVGs (condensed from dawn-cards.html)
+function roleArtSVG(role, color) {
+  const arts = {
+    wolf: `<svg class="art" viewBox="0 0 130 148" fill="none" stroke="${color}" stroke-linecap="round" stroke-linejoin="round"><circle cx="65" cy="16" r="12" stroke-width="2.2"/><circle cx="65" cy="16" r="7" stroke-width="1.4"/><path d="M60,28 L60,36 M70,28 L70,36" stroke-width="2.2"/><path d="M58,36 L58,72 L72,72 L72,36 Z" stroke-width="2.2"/><path d="M58,42 L72,42 M58,48 L72,48 M58,54 L72,54 M58,60 L72,60 M58,66 L72,66" stroke-width="1.1" opacity="0.6"/><path d="M58,72 L40,80 L48,86 L58,80" stroke-width="2.2"/><path d="M72,72 L90,80 L82,86 L72,80" stroke-width="2.2"/><path d="M58,80 L72,80" stroke-width="2.2"/><path d="M58,80 L65,144 L72,80" stroke-width="2.2"/><path d="M65,84 L65,140" stroke-width="1.0" opacity="0.5"/></svg>`,
+    witch: `<svg class="art" viewBox="0 0 130 145" fill="none" class="sl" stroke="${color}" stroke-linecap="round" stroke-linejoin="round"><circle cx="65" cy="105" r="38" stroke-width="1.9"/><circle cx="65" cy="105" r="33" stroke-width="0.6" opacity="0.25"/><path d="M54,67 L54,44 M76,67 L76,44" stroke-width="2"/><path d="M54,67 C52,72 46,78 36,84" stroke-width="1.4"/><path d="M76,67 C78,72 84,78 94,84" stroke-width="1.4"/><path d="M50,44 L50,22 L80,22 L80,44Z" stroke-width="1.8"/><path d="M52,28 L78,28 M52,33 L78,33 M52,38 L78,38" stroke-width="0.8" opacity="0.45"/><path d="M28,108 C35,103 95,103 102,108" stroke-width="1.3" opacity="0.6"/><circle cx="44" cy="120" r="5" stroke-width="1.1"/><circle cx="82" cy="114" r="4" stroke-width="1"/><circle cx="58" cy="132" r="3" stroke-width="0.9"/><path d="M96,30 L98,24 L100,30 L106,32 L100,34 L98,40 L96,34 L90,32Z" stroke-width="1" opacity="0.6"/></svg>`,
+    hunter: `<svg class="art" viewBox="0 0 130 145" fill="none" stroke="${color}" stroke-linecap="round" stroke-linejoin="round"><path d="M58,8 C78,20 86,44 86,72 C86,100 78,124 58,136" stroke-width="3.5" stroke-linecap="butt"/><path d="M58,8 L30,72 L58,136" stroke-width="1.4"/><path d="M8,72 L122,72" stroke-width="2.0"/><path d="M122,72 L112,66 L112,78 Z" stroke-width="1.8" fill="${color}" opacity="0.9"/><path d="M8,72 L16,64 M8,72 L16,80" stroke-width="2.0"/><path d="M58,68 L58,76" stroke-width="2.5" opacity="0.7"/></svg>`,
+    seeker: `<svg class="art" viewBox="0 0 130 145" fill="none" stroke="${color}" stroke-linecap="round" stroke-linejoin="round"><path d="M8,68 C20,40 45,25 65,24 C85,25 110,40 122,68" stroke-width="2"/><path d="M8,68 C20,96 45,111 65,112 C85,111 110,96 122,68" stroke-width="2"/><circle cx="65" cy="68" r="22" stroke-width="1.6"/><circle cx="65" cy="68" r="9" stroke-width="1.4"/><circle cx="65" cy="68" r="5" fill="${color}" stroke="none" opacity="0.5"/><circle cx="69" cy="64" r="2.5" fill="white" stroke="none" opacity="0.7"/></svg>`,
+    villager: `<svg class="art" viewBox="0 0 130 145" fill="none" stroke="${color}" stroke-linecap="round" stroke-linejoin="round"><circle cx="65" cy="22" r="18" stroke-width="1.8"/><path d="M48,14 C50,6 58,2 65,2 C72,2 80,6 82,14" stroke-width="1.5"/><path d="M57,52 C48,52 36,58 30,66 L28,85 L36,86 L38,72 L38,120 L92,120 L92,72 L94,86 L102,85 L100,66 C94,58 82,52 73,52Z" stroke-width="1.8"/><path d="M57,52 L65,64 L73,52" stroke-width="1.2"/><path d="M48,120 L44,142 M82,120 L86,142" stroke-width="1.6"/></svg>`,
+    leader: `<svg class="art" viewBox="0 0 130 145" fill="none" stroke="${color}" stroke-linecap="round" stroke-linejoin="round"><path d="M8,95 L8,110 C8,116 12,120 18,120 L112,120 C118,120 122,116 122,110 L122,95Z" stroke-width="2"/><path d="M8,95 L18,58 L28,95 M28,95 L42,42 L56,95 M47,95 L65,16 L83,95 M74,95 L88,42 L102,95 M102,95 L112,58 L122,95" stroke-width="1.8"/><circle cx="65" cy="24" r="10" stroke-width="1.6"/><circle cx="65" cy="24" r="3" fill="${color}" stroke="none" opacity="0.7"/><text x="93" y="141" font-family="Caveat" font-weight="700" font-size="13" fill="${color}" stroke="none" opacity="0.9">×2</text></svg>`
+  };
+  return arts[role] || arts.villager;
+}
+
+function cardFrontHTML(role) {
+  const d = ROLE_CARD_DATA[role];
+  if (!d) return '';
+  return `
+    <!-- border -->
+    <svg class="fc-border" viewBox="0 0 220 330">
+      <rect x="6" y="6" width="208" height="318" rx="12" fill="none" stroke="${d.color}" stroke-width="1.6" opacity="0.5" stroke-dasharray="4 2"/>
+      <rect x="11" y="11" width="198" height="308" rx="10" fill="none" stroke="${d.color}" stroke-width="0.7" opacity="0.2"/>
+    </svg>
+    <span class="fc-corner tl" style="color:${d.color}">${d.label}</span>
+    <span class="fc-corner br" style="color:${d.color}">${d.label}</span>
+    <div class="fc-divider" style="background:${d.color}"></div>
+    ${roleArtSVG(role, d.color)}
+    <div class="fc-footer">
+      <div class="fc-name">${d.name}</div>
+      <div class="fc-sub" style="color:${d.color}">${d.sub}</div>
+    </div>`;
+}
+
+// Build a standalone role card (for role message / voteout screens)
+function buildRoleCard(role, size) {
+  const d = ROLE_CARD_DATA[role] || ROLE_CARD_DATA.villager;
+  const w = size || 150, h = Math.round(w * 1.5);
+  const el = document.createElement('div');
+  el.style.cssText = `width:${w}px;height:${h}px;position:relative;background:#05081a;border-radius:10px;overflow:hidden;box-shadow:0 0 30px ${d.color}33;`;
+  el.innerHTML = cardFrontHTML(role);
+  return el;
+}
+
+// Roles assigned per card slot — set by host/server
+let cardRoles = [];
+
+function startCardPick() {
+  // Determine player count from lobby
+  const playerCount = lobbyPlayers.filter(Boolean).length || PLAYERS.length;
+  totalPlayers = playerCount;
+  claimedCards = new Set();
+  myCardIndex = null;
+
+  // Assign roles based on settings (simplified; real version from server)
+  cardRoles = assignRoles(playerCount);
+
+  const wrap = document.getElementById('cards-wrap');
+  wrap.innerHTML = '';
+
+  for (let i = 0; i < playerCount; i++) {
+    const card = document.createElement('div');
+    card.className = 'flip-card';
+    card.id = 'flip-card-' + i;
+    card.dataset.index = i;
+    card.innerHTML = `
+      <div class="flip-card-inner">
+        <div class="flip-card-front">${cardFrontHTML(cardRoles[i])}</div>
+        <div class="flip-card-back">${cardBackSVG()}</div>
+      </div>
+      <div class="claimed-label"><span>Claimed</span></div>`;
+    card.addEventListener('click', () => pickCard(i));
+    wrap.appendChild(card);
+  }
+
+  updateCardStatus();
+  goTo('page-cardpick');
+}
+
+function assignRoles(count) {
+  const roles = [];
+  const wCount = Math.min(settings.wolfCount, Math.floor(count / 3));
+  for (let i = 0; i < wCount; i++) roles.push('wolf');
+  if (count >= 4) roles.push('witch');
+  if (count >= 5) roles.push('seeker');
+  if (count >= 6) roles.push('hunter');
+  while (roles.length < count) roles.push('villager');
+  // Shuffle
+  for (let i = roles.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [roles[i], roles[j]] = [roles[j], roles[i]];
+  }
+  return roles;
+}
+
+function pickCard(index) {
+  if (myCardIndex !== null) return; // already picked
+  if (claimedCards.has(index)) return; // taken
+
+  myCardIndex = index;
+  claimedCards.add(index);
+  playerRole = cardRoles[index];
+
+  const card = document.getElementById('flip-card-' + index);
+  card.classList.add('claimed', 'mine');
+
+  // Emit to server: socket.emit('pickCard', { index })
+  updateCardStatus();
+  checkAllPicked();
+}
+
+// Called when server tells us someone else claimed a card
+function onOtherPlayerPicked(index) {
+  if (claimedCards.has(index)) return;
+  claimedCards.add(index);
+  const card = document.getElementById('flip-card-' + index);
+  if (card) card.classList.add('claimed');
+  updateCardStatus();
+  checkAllPicked();
+}
+
+function updateCardStatus() {
+  const el = document.getElementById('cardpick-status');
+  if (el) el.textContent = `${claimedCards.size} / ${totalPlayers} picked`;
+}
+
+function checkAllPicked() {
+  if (claimedCards.size < totalPlayers) return;
+  // All picked — fade out others, keep mine, then flip
+  allPicked = true;
+  const allCards = document.querySelectorAll('.flip-card');
+  allCards.forEach(card => {
+    if (!card.classList.contains('mine')) {
+      card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+      card.style.opacity = '0';
+      card.style.transform = 'scale(0.85)';
+      setTimeout(() => card.style.display = 'none', 600);
+    }
+  });
+
+  // After cards fade, flip mine
+  setTimeout(() => {
+    const mine = document.getElementById('flip-card-' + myCardIndex);
+    if (mine) {
+      mine.style.transform = 'scale(1.15)';
+      mine.style.transition = 'transform 0.4s ease';
+      setTimeout(() => { mine.classList.add('flipped'); }, 400);
+    }
+    // After flip, go to role message
+    setTimeout(showRoleMessage, 1800);
+  }, 700);
+}
+
+// ══════════════════════════════════════════════════════════
+//  ROLE MESSAGE SCREEN
+// ══════════════════════════════════════════════════════════
+function showRoleMessage() {
+  const role = playerRole || 'villager';
+  const d = ROLE_CARD_DATA[role] || ROLE_CARD_DATA.villager;
+
+  // Build card display
+  const wrap = document.getElementById('rolemsg-card-wrap');
+  wrap.innerHTML = '';
+  wrap.appendChild(buildRoleCard(role, 180));
+
+  // Message
+  const msgEl = document.getElementById('rolemsg-msg');
+  const wolfRoles = ['wolf'];
+  if (wolfRoles.includes(role)) {
+    msgEl.innerHTML = `Kill all villagers to win.`;
+    msgEl.style.color = '#ef4444';
+    msgEl.style.textShadow = '0 0 14px rgba(239,68,68,0.5)';
+  } else {
+    msgEl.innerHTML = `Don't reveal your role yet —<br>the wolf or wolves might target you.`;
+    msgEl.style.color = 'rgba(255,255,255,0.85)';
+  }
+
+  const eyebrow = document.getElementById('rolemsg-eyebrow');
+  eyebrow.textContent = 'You are the ' + d.name;
+  eyebrow.style.color = d.color;
+
+  goTo('page-rolemsg');
+}
+
+// ══════════════════════════════════════════════════════════
+//  NIGHT PHASE
+// ══════════════════════════════════════════════════════════
+function enterNightPhase() {
+  gamePhase = 'night';
+  const role = playerRole || 'villager';
+  // Show correct screen
+  const screenMap = {
+    wolf:     'screen-wolf',
+    witch:    'screen-witch',
+    seeker:   'screen-seeker',
+    hunter:   'screen-sleep',  // hunter sleeps until voted out
+    villager: 'screen-sleep',
+    leader:   'screen-sleep',
+  };
+  const screenId = screenMap[role] || 'screen-sleep';
+  if (role === 'sleep' || role === 'villager' || role === 'hunter' || role === 'leader') {
+    document.getElementById('sleep-role-name').textContent = ROLE_CARD_DATA[role]?.name || 'Villager';
+  }
+  goTo('page01'); // clear page system
+  showScreen(screenId);
+  buildPlayerLists();
+  startTimer();
+}
+
+function enterDayPhase() {
+  gamePhase = 'day';
+  if (isPlayerDead) showDeadDayOverlay();
+}
+
+// ══════════════════════════════════════════════════════════
+//  VOTE-OUT REVEAL
+// ══════════════════════════════════════════════════════════
+function showVoteoutReveal(pName, role) {
+  const d = ROLE_CARD_DATA[role] || ROLE_CARD_DATA.villager;
+  document.getElementById('voteout-name').textContent = pName + ' was the...';
+  document.getElementById('voteout-role').textContent = d.name;
+  document.getElementById('voteout-role').style.color = d.color;
+  const wrap = document.getElementById('voteout-card-wrap');
+  wrap.innerHTML = '';
+  wrap.appendChild(buildRoleCard(role, 150));
+  document.getElementById('voteout-overlay').classList.add('open');
+}
+function closeVoteout() { document.getElementById('voteout-overlay').classList.remove('open'); }
+
+// ══════════════════════════════════════════════════════════
+//  CHAT SYSTEM
+// ══════════════════════════════════════════════════════════
+function canChat() {
+  if (gamePhase === 'lobby') return true;
+  if (gamePhase === 'day')   return true;
+  if (gamePhase === 'night') return playerRole === 'wolf';
+  return false;
+}
+
+function addChatMessage(name, text, type) {
+  const box = document.getElementById('chat-messages');
+  if (!box) return;
+  const div = document.createElement('div');
+  div.className = 'chat-msg is-' + type;
+  if (type !== 'system') div.innerHTML = `<span class="msg-name">${name}</span><span class="msg-text">${text}</span>`;
+  else div.innerHTML = `<span class="msg-text">${text}</span>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function sendChat() {
+  if (!canChat()) return;
+  const input = document.getElementById('chat-input');
+  const text = input?.value.trim();
+  if (!text) return;
+  addChatMessage(playerName || 'Player', text, 'self');
+  input.value = '';
+  input.focus();
+}
+
+function chatSystem(text) { addChatMessage('', text, 'system'); }
+function initChat() {
+  const box = document.getElementById('chat-messages');
+  if (box) box.innerHTML = '';
+  chatSystem('— Lobby is open. Waiting for players... —');
+}
+
+// ══════════════════════════════════════════════════════════
+//  WOLF CHAT
+// ══════════════════════════════════════════════════════════
+function addWolfMsg(name, text, isSystem) {
+  const box = document.getElementById('wolf-chat-msgs');
+  if (!box) return;
+  const div = document.createElement('div');
+  div.className = 'cmsg' + (isSystem ? ' sys' : ' self');
+  div.innerHTML = isSystem ? `<span class="ct">${text}</span>` : `<span class="cn">${name}</span><span class="ct">${text}</span>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+function sendWolfMsg() {
+  const inp = document.getElementById('wolf-chat-input');
+  const txt = inp.value.trim();
+  if (!txt) return;
+  addWolfMsg('You', txt, false);
+  inp.value = '';
+  inp.focus();
+}
+
+// ══════════════════════════════════════════════════════════
+//  PLAYER LISTS (night screens)
+// ══════════════════════════════════════════════════════════
+function avatarSVG(color) {
+  return `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="${color}" stroke-width="1.2" stroke-linecap="round"><circle cx="9" cy="6" r="4"/><path d="M2,17 C2,12 16,12 16,17"/></svg>`;
+}
+
+function buildPlayerList(containerId, mode) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '';
+  PLAYERS.filter(p => p.alive).forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'player-row' + (p.isYou ? ' is-you' : '');
+    row.id = 'pr-' + mode + '-' + p.id;
+    const color = p.isYou ? 'rgba(255,255,255,0.3)' : 'rgba(80,140,255,0.7)';
+    row.innerHTML = `<div class="player-avatar">${avatarSVG(color)}</div><span class="player-name-txt">${p.name}${p.isYou ? ' (You)' : ''}</span><span class="player-house">#${String(p.house).padStart(2,'0')}</span><span class="select-mark">✕ Marked</span>`;
+    if (!p.isYou) row.onclick = () => selectPlayer(containerId, mode, p.id);
+    el.appendChild(row);
+  });
+}
+
+function buildPlayerLists() {
+  buildPlayerList('wolf-player-list', 'eliminate');
+  buildPlayerList('witch-player-list', 'save');
+  buildPlayerList('seeker-player-list', 'check');
+  buildHunterList();
+}
+
+let selectedTargets = { eliminate:null, save:null, kill:null, check:null, hunter:null };
+
+function selectPlayer(containerId, mode, pid) {
+  document.querySelectorAll('#' + containerId + ' .player-row').forEach(r => r.classList.remove('selected','selected-save','selected-check'));
+  selectedTargets[mode] = pid;
+  const row = document.getElementById('pr-' + mode + '-' + pid);
+  if (!row) return;
+  if (mode === 'save')       row.classList.add('selected-save');
+  else if (mode === 'check') row.classList.add('selected-check');
+  else                       row.classList.add('selected');
+}
+
+function confirmWolfTarget() {
+  const id = selectedTargets.eliminate;
+  if (!id) { alert('Select a target first.'); return; }
+  const p = PLAYERS.find(x => x.id === id);
+  addWolfMsg('System', `You marked ${p.name} for elimination.`, true);
+}
+
+let witchMode = 'save';
+function setWitchMode(mode) {
+  witchMode = mode;
+  document.getElementById('witch-save-btn').className = 'witch-mode-btn' + (mode==='save' ? ' active-save' : '');
+  document.getElementById('witch-kill-btn').className = 'witch-mode-btn' + (mode==='kill' ? ' active-kill' : '');
+  const instr = document.getElementById('witch-instruction');
+  const conf  = document.getElementById('witch-confirm-btn');
+  if (mode === 'save') { instr.textContent = "The wolf's victim is highlighted. Save them?"; conf.textContent = 'Confirm Save'; conf.className = 'confirm-btn green'; }
+  else { instr.textContent = 'Choose a player to eliminate with your potion.'; conf.textContent = 'Confirm Kill'; conf.className = 'confirm-btn'; buildPlayerList('witch-player-list', 'kill'); }
+}
+
+function confirmWitchAction() {
+  const id = selectedTargets[witchMode];
+  if (!id) { alert('Select a player first.'); return; }
+}
+
+function confirmSeekerCheck() {
+  const id = selectedTargets.check;
+  if (!id) { alert('Select a player first.'); return; }
+  const p = PLAYERS.find(x => x.id === id);
+  const box = document.getElementById('seeker-reveal-box');
+  const roleName = document.getElementById('reveal-role-name');
+  box.style.display = 'flex';
+  roleName.textContent = p.role.charAt(0).toUpperCase() + p.role.slice(1);
+  roleName.style.color = ROLE_COLORS[p.role] || '#fff';
+  document.getElementById('seeker-check-count').textContent = '1 / 1';
+}
+
+function buildHunterList() {
+  const el = document.getElementById('hunter-player-list');
+  if (!el) return;
+  el.innerHTML = '';
+  PLAYERS.filter(p => p.alive && !p.isYou).forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'player-row';
+    row.id = 'pr-hunter-' + p.id;
+    const color = 'rgba(34,197,94,0.7)';
+    row.innerHTML = `<div class="player-avatar">${avatarSVG(color)}</div><span class="player-name-txt">${p.name}</span><span class="select-mark" style="color:rgba(34,197,94,0.9);">⟶ Marked</span>`;
+    row.onclick = () => {
+      selectedTargets.hunter = p.id;
+      document.querySelectorAll('#hunter-player-list .player-row').forEach(r => r.classList.remove('selected-hunter'));
+      row.classList.add('selected-hunter');
+    };
+    el.appendChild(row);
+  });
+}
+
+function confirmHunterTarget() {
+  const id = selectedTargets.hunter;
+  if (!id) { alert('Select a target first.'); return; }
+  const p = PLAYERS.find(x => x.id === id);
+  const btn = document.getElementById('hunter-confirm-btn');
+  btn.textContent = `Arrow fired at ${p.name}`;
+  btn.style.opacity = '0.5';
+  btn.style.pointerEvents = 'none';
+}
+
+// ══════════════════════════════════════════════════════════
+//  DEAD SCREEN
+// ══════════════════════════════════════════════════════════
+function markPlayerDead(roleName, roleColor) {
+  isPlayerDead = true;
+  const roleDisp = document.getElementById('dead-role-display');
+  if (roleDisp) { roleDisp.textContent = roleName || 'Villager'; roleDisp.style.color = roleColor || 'rgba(239,68,68,0.4)'; }
+  addDeadMsg('', '— You have been eliminated. Only the dead can hear you. —', true);
+  showScreen('screen-dead');
+}
+
+function addDeadMsg(name, text, isSystem) {
+  const box = document.getElementById('dead-chat-msgs');
+  if (!box) return;
+  const div = document.createElement('div');
+  const isSelf = name === 'You';
+  if (isSystem) div.innerHTML = `<span style="font-family:'Rajdhani',sans-serif;font-size:0.7rem;font-style:italic;color:rgba(255,255,255,0.15);text-align:center;">${text}</span>`;
+  else div.innerHTML = `<span style="font-size:0.5rem;letter-spacing:0.1em;text-transform:uppercase;color:${isSelf?'rgba(239,68,68,0.7)':'rgba(200,80,80,0.5)'};">${name}</span><span style="font-family:'Rajdhani',sans-serif;font-size:0.82rem;color:${isSelf?'rgba(255,180,180,0.9)':'rgba(200,160,160,0.8)'};word-break:break-word;line-height:1.4;">${text}</span>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function sendDeadMsg() {
+  const inp = document.getElementById('dead-chat-input');
+  const txt = inp.value.trim();
+  if (!txt) return;
+  addDeadMsg('You', txt, false);
+  inp.value = '';
+}
+
+function showDeadDayOverlay() {
+  let overlay = document.getElementById('dead-day-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'dead-day-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:200;background:radial-gradient(ellipse at 50% 60%,rgba(20,0,0,0.7) 0%,#010409 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;';
+    overlay.innerHTML = `<div style="font-family:'Caveat',cursive;font-weight:700;font-size:1.6rem;color:rgba(239,68,68,0.45);text-align:center;line-height:1.3;">You are no longer<br>among the living.</div><div style="font-family:'Rajdhani',sans-serif;font-size:0.82rem;letter-spacing:0.08em;color:rgba(255,255,255,0.2);text-align:center;max-width:280px;line-height:1.7;">The village deliberates. Your voice cannot reach them.<br>Wait for night to speak with the fallen.</div><div style="font-family:'Rajdhani',sans-serif;font-size:0.62rem;letter-spacing:0.28em;text-transform:uppercase;color:rgba(255,255,255,0.12);">Day Phase — Spectating</div>`;
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+}
+
+// ══════════════════════════════════════════════════════════
+//  NIGHT TIMER
+// ══════════════════════════════════════════════════════════
+const TIMER_MAX = 120; // use settings.nightDuration * 60 in real game
+let timerVal = TIMER_MAX;
+let timerInterval = null;
+
+function startTimer() {
+  timerVal = settings.nightDuration * 60;
+  updateTimerUI();
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timerVal--;
+    updateTimerUI();
+    if (timerVal <= 0) {
+      timerVal = 0;
+      clearInterval(timerInterval);
+      startMorningTransition(morningDayCount, 'Dawn breaks over<br>the village.', 'The night is over. Gather the village and find out what happened while you slept.');
+    }
+  }, 1000);
+}
+
+function updateTimerUI() {
+  const pct = (timerVal / (settings.nightDuration * 60) * 100) + '%';
+  const color = timerVal > 20 ? null : 'rgba(239,100,100,0.85)';
+  ['','w','s','sl','dead'].forEach(sfx => {
+    const n = document.getElementById('countdown-num' + (sfx ? '-'+sfx : ''));
+    const b = document.getElementById('countdown-bar' + (sfx ? '-'+sfx : ''));
+    if (n) { n.textContent = timerVal; if(color) n.style.color = color; }
+    if (b) { b.style.width = pct; if(color) { b.style.background = color; b.style.boxShadow = '0 0 8px '+color; } }
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+//  VICTORY
+// ══════════════════════════════════════════════════════════
+function showVictory(winner, winners) {
+  goTo('page-victory');
+  document.getElementById('vic-wolves').style.display = 'none';
+  document.getElementById('vic-village').style.display = 'none';
+  if (winner === 'wolves') {
+    const el = document.getElementById('vic-wolves');
+    el.style.display = 'flex';
+    const wEl = document.getElementById('wolf-winners');
+    wEl.innerHTML = (winners || []).map(n => `<div class="vp-chip"><span class="vp-dot"></span>${n}</div>`).join('');
+    startParticles('wolf');
+  } else {
+    document.getElementById('vic-village').style.display = 'flex';
+    startParticles('village');
+  }
+}
+
+function playAgain() { goTo('page01'); }
+
+// ══════════════════════════════════════════════════════════
+//  PARTICLES (victory screen)
+// ══════════════════════════════════════════════════════════
+const pCanvas = document.getElementById('particle-canvas');
+const pCtx    = pCanvas.getContext('2d');
+let pW, pH, particles = [], animFrame, pMode = 'wolf';
+
+function resizeParticles() { pW = pCanvas.width = innerWidth; pH = pCanvas.height = innerHeight; }
+window.addEventListener('resize', resizeParticles); resizeParticles();
+
+function startParticles(m) {
+  pMode = m; cancelAnimationFrame(animFrame); particles = [];
+  for (let i = 0; i < 60; i++) spawnParticle(true);
+  loopParticles();
+}
+
+function spawnParticle(instant) {
+  const isWolf = pMode === 'wolf';
+  particles.push({ x:Math.random()*pW, y:instant?Math.random()*pH:pH+10, vx:(Math.random()-0.5)*0.6, vy:-(Math.random()*0.8+0.3), size:Math.random()*2.5+0.5, alpha:Math.random()*0.6+0.2, fade:Math.random()*0.004+0.002, color:isWolf?`rgba(239,${Math.floor(Math.random()*40+20)},${Math.floor(Math.random()*20)},`:`rgba(${Math.floor(Math.random()*60+160)},${Math.floor(Math.random()*60+180)},255,` });
+}
+
+function loopParticles() {
+  pCtx.clearRect(0,0,pW,pH);
+  particles.forEach((p,i) => {
+    p.x+=p.vx; p.y+=p.vy; p.alpha-=p.fade;
+    if (p.alpha <= 0) { particles.splice(i,1); spawnParticle(false); return; }
+    pCtx.beginPath(); pCtx.arc(p.x,p.y,p.size,0,Math.PI*2);
+    pCtx.fillStyle = p.color + p.alpha + ')'; pCtx.fill();
+  });
+  animFrame = requestAnimationFrame(loopParticles);
+}
+
+// ══════════════════════════════════════════════════════════
+//  MORNING TRANSITION
+// ══════════════════════════════════════════════════════════
+let morningDayCount = 2;
+
+function startMorningTransition(dayNum, mainMsg, subMsg) {
+  morningDayCount = dayNum || morningDayCount;
+  const wrapper = document.getElementById('screen-morning');
+  const sky = document.getElementById('morning-sky');
+  const horizon = document.getElementById('morning-horizon');
+  const sun = document.getElementById('morning-sun');
+  const label = document.getElementById('morning-phase-label');
+  const msg = document.getElementById('morning-main-msg');
+  const sub = document.getElementById('morning-sub-msg');
+  const badge = document.getElementById('morning-day-badge');
+  const btn = document.getElementById('morning-continue-btn');
+  const dayNumEl = document.getElementById('morning-day-num');
+
+  wrapper.classList.remove('morning-phase-1','morning-phase-2','morning-phase-3','morning-phase-4');
+  sky.style.transition = 'none';
+  sun.style.transition = 'none';
+  sun.style.bottom = '-60px'; sun.style.opacity = '0';
+  label.style.opacity='0'; label.style.transform='translateY(8px)';
+  msg.style.opacity='0'; msg.style.transform='translateY(14px)';
+  sub.style.opacity='0'; sub.style.transform='translateY(10px)';
+  badge.style.opacity='0';
+  btn.classList.remove('visible');
+  if (mainMsg) msg.innerHTML = mainMsg;
+  if (subMsg)  sub.textContent = subMsg;
+  if (dayNumEl) dayNumEl.textContent = morningDayCount;
+
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  wrapper.classList.add('active');
+  morningStarFade();
+
+  setTimeout(()=>{ sky.style.transition='background 2s ease'; wrapper.classList.add('morning-phase-1'); }, 500);
+  setTimeout(()=>{ wrapper.classList.replace('morning-phase-1','morning-phase-2'); }, 2500);
+  setTimeout(()=>{ wrapper.classList.replace('morning-phase-2','morning-phase-3'); horizon.style.background='radial-gradient(ellipse at 50% 100%,rgba(255,100,20,0.35) 0%,rgba(255,80,10,0.18) 40%,rgba(255,60,0,0) 80%)'; }, 4500);
+  setTimeout(()=>{ sun.style.transition='bottom 4s cubic-bezier(.2,.8,.4,1),opacity 3s ease'; sun.style.bottom='16%'; sun.style.opacity='1'; }, 5500);
+  setTimeout(()=>{ wrapper.classList.replace('morning-phase-3','morning-phase-4'); horizon.style.background='radial-gradient(ellipse at 50% 100%,rgba(255,160,40,0.45) 0%,rgba(255,100,20,0.22) 45%,transparent 80%)'; }, 6500);
+  setTimeout(()=>{ label.style.opacity='1'; label.style.transform='none'; msg.style.opacity='1'; msg.style.transform='none'; sub.style.opacity='1'; sub.style.transform='none'; badge.style.opacity='1'; }, 7000);
+  setTimeout(()=>{ btn.classList.add('visible'); }, 8500);
+}
+
+function endMorningTransition() {
+  morningDayCount++;
+  document.getElementById('screen-morning').classList.remove('active');
+  enterDayPhase();
+  goTo('pageLobby');
+}
+
+function morningStarFade() {
+  const c = document.getElementById('morning-stars');
+  const ctx2 = c.getContext('2d');
+  let W2 = c.width = innerWidth, H2 = c.height = innerHeight;
+  let stars = [];
+  for (let i=0;i<120;i++) stars.push({x:Math.random()*W2,y:Math.random()*H2*0.7,r:Math.random()*1.1+0.1,a:Math.random()*0.7+0.1});
+  let fadeStart = Date.now() + 5000;
+  function draw() {
+    ctx2.clearRect(0,0,W2,H2);
+    const now = Date.now();
+    stars.forEach(s=>{ if(now>fadeStart) s.a-=0.003; if(s.a<0) s.a=0; if(s.a>0){ctx2.beginPath();ctx2.arc(s.x,s.y,s.r,0,Math.PI*2);ctx2.fillStyle=`rgba(210,220,255,${s.a})`;ctx2.fill();} });
+    if (stars.some(s=>s.a>0)) requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// ══════════════════════════════════════════════════════════
+//  STARS BACKGROUND (night screens)
+// ══════════════════════════════════════════════════════════
+(function(){
+  const c = document.getElementById('stars-canvas');
+  const x = c.getContext('2d');
+  let W,H,S=[];
+  function resize(){W=c.width=innerWidth;H=c.height=innerHeight;}
+  function init(){S=[];for(let i=0;i<120;i++) S.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.1+0.1,a:Math.random(),s:(Math.random()-0.5)*0.005});}
+  function draw(){x.clearRect(0,0,W,H);for(const s of S){s.a+=s.s;if(s.a<=0||s.a>=1)s.s*=-1;x.beginPath();x.arc(s.x,s.y,s.r,0,Math.PI*2);x.fillStyle=`rgba(200,210,255,${s.a*0.5})`;x.fill();}requestAnimationFrame(draw);}
+  window.addEventListener('resize',()=>{resize();init();}); resize(); init(); draw();
+})();
+
+// ══════════════════════════════════════════════════════════
+//  SQUIGGLE BORDER ENGINE
+// ══════════════════════════════════════════════════════════
+const FRAME_IDS = new Set(['bc-f01','bc-f02','bc-f03','bc-f04','bc-f06','bc-f09']);
+const PANEL_IDS = new Set(['bc-art','bc-madeby','bc-htpleft','bc-creditbody','bc-p6title','bc-p6desc','bc-p6list','bc-p9box']);
+const BTN_IDS   = new Set(['bc-btn-play','bc-btn-htp','bc-btn-cred','bc-btn-host','bc-btn-join','bc-btn-pt']);
+
+// Night screen canvases
+const NIGHT_IDS = [
+  'bc-wolf','bc-wolf-role','bc-wolf-action','bc-wolf-chat',
+  'bc-witch','bc-witch-role','bc-witch-action','bc-witch-lock','bc-witch-status',
+  'bc-seeker','bc-seeker-role','bc-seeker-action','bc-seeker-lock','bc-seeker-status',
+  'bc-sleep',
+  'bc-hunter','bc-hunter-role','bc-hunter-msg','bc-hunter-action',
+  'bc-hunter-wait','bc-witch-wait','bc-dead',
+  'bc-pregame'
+];
+
+const ALL_IDS = [...FRAME_IDS, ...PANEL_IDS, ...BTN_IDS, ...NIGHT_IDS];
+
+const seeds = {};
+ALL_IDS.forEach((id,i) => { seeds[id] = i * 17.3; });
+
+function noise(x, seed) {
+  return Math.sin(x*1.7+seed)*0.5 + Math.sin(x*3.1+seed*1.3)*0.3 + Math.sin(x*5.7+seed*0.7)*0.2;
+}
+
+function drawBorder(ctx, w, h, t, seed, layers) {
+  ctx.clearRect(0,0,w,h);
+  const pad=5;
+  for(const [color,amp,freq,sw] of layers){
+    ctx.strokeStyle=color; ctx.lineWidth=sw*4; ctx.lineJoin='round'; ctx.lineCap='round'; ctx.globalAlpha=0.18;
+    ctx.beginPath();
+    for(let x=pad;x<=w-pad;x+=2){const n=noise(x*freq+t*3.1,seed);x===pad?ctx.moveTo(x,pad+n*amp):ctx.lineTo(x,pad+n*amp);}
+    for(let y=pad;y<=h-pad;y+=2){const n=noise(y*freq+t*2.7+10,seed+5);ctx.lineTo(w-pad+n*amp,y);}
+    for(let x=w-pad;x>=pad;x-=2){const n=noise(x*freq+t*3.4+20,seed+10);ctx.lineTo(x,h-pad+n*amp);}
+    for(let y=h-pad;y>=pad;y-=2){const n=noise(y*freq+t*2.9+30,seed+15);ctx.lineTo(pad+n*amp,y);}
+    ctx.closePath(); ctx.stroke(); ctx.globalAlpha=1.0;
+    ctx.strokeStyle=color; ctx.lineWidth=sw;
+    ctx.beginPath();
+    for(let x=pad;x<=w-pad;x+=2){const n=noise(x*freq+t*3.1,seed);x===pad?ctx.moveTo(x,pad+n*amp):ctx.lineTo(x,pad+n*amp);}
+    for(let y=pad;y<=h-pad;y+=2){const n=noise(y*freq+t*2.7+10,seed+5);ctx.lineTo(w-pad+n*amp,y);}
+    for(let x=w-pad;x>=pad;x-=2){const n=noise(x*freq+t*3.4+20,seed+10);ctx.lineTo(x,h-pad+n*amp);}
+    for(let y=h-pad;y>=pad;y-=2){const n=noise(y*freq+t*2.9+30,seed+15);ctx.lineTo(pad+n*amp,y);}
+    ctx.closePath(); ctx.stroke();
+  }
+}
+
+function getLayersFor(id) {
+  if (FRAME_IDS.has(id))         return [['rgba(255,255,255,1.0)',3.8,0.09,2.5],['rgba(255,50,50,1.0)',3.2,0.08,2.0],['rgba(60,120,255,1.0)',2.8,0.07,1.8]];
+  if (BTN_IDS.has(id))           return [['rgba(255,255,255,1.0)',3.2,0.09,2.2]];
+  if (id.startsWith('bc-wolf'))  return [['rgba(255,255,255,1.0)',3.8,0.09,2.5],['rgba(239,68,68,1.0)',3.2,0.08,2.0],['rgba(180,20,20,0.9)',2.8,0.07,1.8]];
+  if (id.startsWith('bc-witch')) return [['rgba(255,255,255,1.0)',3.8,0.09,2.5],['rgba(168,85,247,1.0)',3.2,0.08,2.0],['rgba(110,30,200,0.9)',2.8,0.07,1.8]];
+  if (id.startsWith('bc-seeker'))return [['rgba(255,255,255,1.0)',3.8,0.09,2.5],['rgba(6,182,212,1.0)',3.2,0.08,2.0],['rgba(0,120,160,0.9)',2.8,0.07,1.8]];
+  if (id.startsWith('bc-hunter'))return [['rgba(255,255,255,1.0)',3.8,0.09,2.5],['rgba(34,197,94,1.0)',3.2,0.08,2.0],['rgba(15,120,50,0.9)',2.8,0.07,1.8]];
+  if (id === 'bc-sleep')         return [['rgba(255,255,255,0.3)',2.5,0.09,1.8]];
+  if (id.startsWith('bc-dead'))  return [['rgba(180,20,20,0.7)',3.0,0.09,2.0],['rgba(120,10,10,0.5)',2.4,0.07,1.5]];
+  if (id === 'bc-pregame')       return [['rgba(255,255,255,0.8)',3.8,0.09,2.5],['rgba(255,50,50,1.0)',3.2,0.08,2.0],['rgba(60,120,255,1.0)',2.8,0.07,1.8]];
+  return [['rgba(100,180,255,0.95)',2.8,0.09,1.8]];
+}
+
+const hoveredBtns = new Set();
+document.querySelectorAll('.menu-btn, .game-option-btn, .pt-btn').forEach(el => {
+  const cv = el.querySelector('canvas.bc');
+  if (!cv) return;
+  el.addEventListener('mouseenter', () => hoveredBtns.add(cv.id));
+  el.addEventListener('mouseleave', () => {
+    hoveredBtns.delete(cv.id);
+    const c = document.getElementById(cv.id);
+    if (c) c.getContext('2d').clearRect(0,0,c.width,c.height);
+  });
+});
+
+function resizeCanvas(id) {
+  const cv = document.getElementById(id);
+  if (!cv) return;
+  const p = cv.parentElement;
+  if (!p) return;
+  cv.width  = p.offsetWidth  || 1;
+  cv.height = p.offsetHeight || 1;
+}
+
+function resizeAll() { ALL_IDS.forEach(id => resizeCanvas(id)); }
+
+function renderAll() {
+  ALL_IDS.forEach(id => {
+    const cv = document.getElementById(id);
+    if (!cv || !cv.width || !cv.height) return;
+    if (BTN_IDS.has(id) && !hoveredBtns.has(id)) return;
+    drawBorder(cv.getContext('2d'), cv.width, cv.height, stepT, seeds[id], getLayersFor(id));
+  });
+}
+
+const STEP_MS = 80;
+let stepT = 0, lastStep = 0;
+
+function loop(now) {
+  if (now - lastStep >= STEP_MS) {
+    stepT += 0.4 + Math.random() * 0.3;
+    lastStep = now;
+    renderAll();
+  }
+  requestAnimationFrame(loop);
+}
+
+window.addEventListener('resize', () => { resizeAll(); renderAll(); });
+resizeAll();
+requestAnimationFrame(loop);
+</script>
+
+<!-- ══ VOTING OVERLAY ══ -->
+<div id="vote-overlay">
+  <div id="vote-header">
+    <span id="vote-title">Day Phase · Village Vote</span>
+    <div id="vote-subtitle">Who do you suspect?</div>
+    <span id="vote-tally-label">Click a player to cast your vote</span>
+  </div>
+  <div id="vote-list"></div>
+  <div id="vote-progress">0 / 0 players have voted</div>
+  <button id="vote-skip-btn" onclick="castSkipVote()">Skip Vote</button>
+</div>
+
+<!-- ══ VOTE RESULT BANNER ══ -->
+<div id="vote-result-banner">
+  <div class="vrb-main" id="vrb-main-text"></div>
+  <div class="vrb-sub" id="vrb-sub-text"></div>
+</div>
+
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  SOCKET CLIENT — overrides stub functions with real calls
+// ══════════════════════════════════════════════════════════
+// ── Point this at your Render backend URL ──────────────────
+// During local dev, leave as empty string so it connects to localhost.
+// On GitHub Pages, set this to your Render URL e.g.:
+const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? ''  // same-origin (local dev with node server)
+  : 'https://dawn-cardgame-backend-production.up.railway.app';
+
+const socket = io(BACKEND_URL, { transports: ['websocket', 'polling'], reconnectionAttempts: 5 });
+let mySocketId = null;
+let LIVE_PLAYERS = {};
+
+function getLivePlayers()    { return Object.values(LIVE_PLAYERS); }
+function getLiveAlive()      { return getLivePlayers().filter(p => p.alive); }
+function getPlayer(id)       { return LIVE_PLAYERS[id] || null; }
+function getMyPlayer()       { return LIVE_PLAYERS[mySocketId] || null; }
+function isMyId(id)          { return id === mySocketId; }
+
+hostGame = function() {
+  const n = playerName.trim();
+  if (!n) { alert("Enter your name first."); return; }
+  socket.emit("host", { playerName: n });
+};
+
+submitJoinCode = function() {
+  const input = document.getElementById("join-code-input");
+  const code  = input.value.trim().toUpperCase();
+  if (code.length < 5) return;
+  document.getElementById("join-form").style.display    = "none";
+  document.getElementById("join-loading").style.display = "flex";
+  socket.emit("join", { code, playerName: (playerName.trim() || "Player") });
+};
+
+saveSettings = function() {
+  socket.emit("updateSettings", Object.assign({}, settings));
+  closeSettings();
+};
+
+startGameSequence = function() {
+  socket.emit("startGame");
+};
+
+pickCard = function(index) {
+  if (myCardIndex !== null) return;
+  if (claimedCards.has(index)) return;
+  myCardIndex = index;
+  const card = document.getElementById("flip-card-" + index);
+  if (card) card.classList.add("claimed", "mine");
+  socket.emit("pickCard", { index });
+};
+
+confirmWolfTarget = function() {
+  const id = selectedTargets.eliminate;
+  if (!id) { alert("Select a target first."); return; }
+  socket.emit("wolfTarget", { targetId: id });
+  const p = getPlayer(id);
+  addWolfMsg("System", "You marked " + (p ? p.name : id) + " for elimination.", true);
+};
+
+confirmWitchAction = function() {
+  const id = selectedTargets[witchMode];
+  if (!id) { alert("Select a player first."); return; }
+  socket.emit("witchAction", { action: witchMode, targetId: id });
+};
+
+confirmSeekerCheck = function() {
+  const id = selectedTargets.check;
+  if (!id) { alert("Select a player first."); return; }
+  socket.emit("seekerCheck", { targetId: id });
+};
+
+confirmHunterTarget = function() {
+  const id = selectedTargets.hunter;
+  if (!id) { alert("Select a target first."); return; }
+  socket.emit("hunterTarget", { targetId: id });
+  const btn = document.getElementById("hunter-confirm-btn");
+  const p   = getPlayer(id);
+  if (btn) { btn.textContent = "Arrow fired at " + (p ? p.name : id); btn.style.opacity="0.5"; btn.style.pointerEvents="none"; }
+};
+
+sendChat = function() {
+  const input = document.getElementById("chat-input");
+  const text  = input ? input.value.trim() : "";
+  if (!text) return;
+  socket.emit("chatMessage", { text });
+  input.value = "";
+  input.focus();
+};
+
+sendWolfMsg = function() {
+  const inp = document.getElementById("wolf-chat-input");
+  const txt = inp ? inp.value.trim() : "";
+  if (!txt) return;
+  socket.emit("wolfChat", { text: txt });
+  inp.value = "";
+  inp.focus();
+};
+
+sendDeadMsg = function() {
+  const inp = document.getElementById("dead-chat-input");
+  const txt = inp ? inp.value.trim() : "";
+  if (!txt) return;
+  socket.emit("deadChat", { text: txt });
+  inp.value = "";
+};
+
+function refreshPlayerLists() {
+  const alive = getLiveAlive().map(p => ({
+    id: p.id, name: p.name, house: p.house,
+    role: p.role, alive: p.alive, isYou: isMyId(p.id),
+  }));
+  PLAYERS.length = 0;
+  alive.forEach(p => PLAYERS.push(p));
+  buildPlayerLists();
+}
+
+// ── SERVER → CLIENT EVENTS ─────────────────────────────────
+
+
+// ── Override: enterDayPhase ───────────────────────────────
+enterDayPhase = function() {
+  gamePhase = 'day';
+  if (isPlayerDead) {
+    showDeadDayOverlay();
+    return;
+  }
+  openVoteOverlay();
+};
+
+// ── Voting UI ─────────────────────────────────────────────
+let myCurrentVote = null;
+
+function openVoteOverlay() {
+  myCurrentVote = null;
+  buildVoteList({});
+  document.getElementById('vote-overlay').classList.add('open');
+}
+
+function closeVoteOverlay() {
+  document.getElementById('vote-overlay').classList.remove('open');
+}
+
+function buildVoteList(counts) {
+  const list = document.getElementById('vote-list');
+  list.innerHTML = '';
+  const alive = getLiveAlive();
+  const total = alive.length;
+  const maxVotes = Math.max(1, ...Object.values(counts));
+
+  alive.forEach(p => {
+    const row = document.createElement('div');
+    const voteCount = counts[p.id] || 0;
+    const barPct = Math.round((voteCount / maxVotes) * 100);
+    const isMe = isMyId(p.id);
+    const isVotedFor = myCurrentVote === p.id;
+
+    row.className = 'vote-row' + (isMe ? ' is-you' : '') + (isVotedFor ? ' voted-for' : '');
+    row.id = 'vrow-' + p.id;
+    row.innerHTML = `
+      <div class="vr-bar" style="width:${barPct}%"></div>
+      <span class="vr-name">${p.name}${isMe ? ' (You)' : ''}</span>
+      ${isVotedFor ? '<span class="vr-you-tag">Your Vote</span>' : ''}
+      <span class="vr-count">${voteCount > 0 ? voteCount : ''}</span>`;
+
+    if (!isMe) row.onclick = () => castVote(p.id);
+    list.appendChild(row);
+  });
+}
+
+function castVote(targetId) {
+  myCurrentVote = targetId;
+  socket.emit('castVote', { targetId });
+  // Visually mark immediately
+  document.querySelectorAll('.vote-row').forEach(r => r.classList.remove('voted-for'));
+  const row = document.getElementById('vrow-' + targetId);
+  if (row) {
+    row.classList.add('voted-for');
+    // Add your vote tag if not present
+    if (!row.querySelector('.vr-you-tag')) {
+      const tag = document.createElement('span');
+      tag.className = 'vr-you-tag';
+      tag.textContent = 'Your Vote';
+      row.insertBefore(tag, row.querySelector('.vr-count'));
+    }
+  }
+  // Disable skip once voted
+  const skipBtn = document.getElementById('vote-skip-btn');
+  if (skipBtn) skipBtn.disabled = true;
+}
+
+function castSkipVote() {
+  myCurrentVote = 'skip';
+  socket.emit('skipVote');
+  const skipBtn = document.getElementById('vote-skip-btn');
+  if (skipBtn) { skipBtn.textContent = 'Skipped'; skipBtn.disabled = true; }
+  document.querySelectorAll('.vote-row').forEach(r => r.classList.remove('voted-for'));
+}
+
+function showVoteResultBanner(text, sub, duration) {
+  const banner = document.getElementById('vote-result-banner');
+  const main   = document.getElementById('vrb-main-text');
+  const subEl  = document.getElementById('vrb-sub-text');
+  main.textContent  = text;
+  subEl.textContent = sub || '';
+  banner.classList.add('show');
+  setTimeout(() => banner.classList.remove('show'), duration || 4000);
+}
+
+// ── Socket: voteUpdate ────────────────────────────────────
+socket.on('voteUpdate', function(data) {
+  buildVoteList(data.counts);
+  const prog = document.getElementById('vote-progress');
+  if (prog) prog.textContent = data.voted + ' / ' + data.total + ' players have voted';
+});
+
+// ── Socket: voteResult ────────────────────────────────────
+socket.on('voteResult', function(data) {
+  closeVoteOverlay();
+  if (!data.eliminated) {
+    const msg = data.tie ? 'It's a tie — no one is voted out.' : 'No votes cast — night begins.';
+    showVoteResultBanner(msg, 'The village could not decide.', 4000);
+  }
+  // playerEliminated event handles the actual reveal
+});
+
+socket.on("roomCreated", function(data) {
+  setHostLoading(false);
+  mySocketId  = data.playerId;
+  currentCode = data.code;
+  isHost      = true;
+  document.getElementById("room-code-display").textContent = data.code;
+  buildHousesGrid();
+  goTo("pageLobby");
+  setTimeout(function() { initChat(); registerLobbyCanvas(); resizeAll(); }, 60);
+});
+
+socket.on("roomJoined", function(data) {
+  mySocketId  = data.playerId;
+  currentCode = data.code;
+  isHost      = false;
+  document.getElementById("room-code-display").textContent = data.code;
+  var startBtn    = document.getElementById("start-game-btn");
+  var settingsBtn = document.getElementById("settings-lobby-btn");
+  if (startBtn)    startBtn.style.display    = "none";
+  if (settingsBtn) settingsBtn.style.display = "none";
+  buildHousesGrid();
+  goTo("pageLobby");
+  setTimeout(function() { initChat(); registerLobbyCanvas(); resizeAll(); }, 60);
+});
+
+socket.on("joinError", function(data) {
+  document.getElementById("join-loading").style.display = "none";
+  document.getElementById("join-form").style.display    = "block";
+  var err = document.getElementById("join-error");
+  err.textContent = "Error: " + data.message + " Error ID: " + data.errorId;
+  err.style.opacity = "1";
+  clearTimeout(joinErrorTimeout);
+  joinErrorTimeout = setTimeout(function() { err.style.opacity = "0"; }, 15000);
+});
+
+socket.on("startError", function(data) { alert(data.message); });
+
+socket.on("lobbyState", function(data) {
+  LIVE_PLAYERS = {};
+  data.players.forEach(function(p) { LIVE_PLAYERS[p.id] = p; });
+  if (data.settings) Object.assign(settings, data.settings);
+  for (var i = 0; i < 15; i++) {
+    var p = data.players.find(function(x) { return x.house === i; });
+    if (p) updateHouseSlot(i, p.name + (isMyId(p.id) ? " (You)" : "") + (p.dc ? " [D/C]" : ""), p.dc);
+    else   updateHouseSlot(i, null);
+  }
+  var w = document.getElementById("lobby-waiting");
+  if (w) w.textContent = data.players.length + " player" + (data.players.length !== 1 ? "s" : "") + " — Waiting...";
+});
+
+socket.on("settingsUpdated", function(s) {
+  Object.assign(settings, s);
+  Object.keys(settings).forEach(function(k) {
+    var el = document.getElementById("val-" + k);
+    if (el) el.textContent = settings[k];
+  });
+  chatSystem("— Settings updated by host —");
+});
+
+socket.on("gameStarting", function(data) {
+  goTo("page-pregame");
+  var count = data.countdown || 5;
+  var numEl = document.getElementById("pregame-num");
+  numEl.textContent = count;
+  var iv = setInterval(function() {
+    count--;
+    if (count <= 0) { clearInterval(iv); }
+    else {
+      numEl.textContent = count;
+      numEl.style.animation = "none";
+      void numEl.offsetWidth;
+      numEl.style.animation = "pregameNum 1s steps(1) infinite";
+    }
+  }, 1000);
+});
+
+socket.on("dealCards", function(data) {
+  totalPlayers = data.cardCount;
+  claimedCards = new Set();
+  myCardIndex  = null;
+  cardRoles    = new Array(data.cardCount).fill("villager");
+  var wrap = document.getElementById("cards-wrap");
+  wrap.innerHTML = "";
+  for (var i = 0; i < data.cardCount; i++) {
+    var card = document.createElement("div");
+    card.className = "flip-card";
+    card.id = "flip-card-" + i;
+    card.dataset.index = i;
+    (function(idx) {
+      card.innerHTML = "<div class=\"flip-card-inner\"><div class=\"flip-card-front\"></div><div class=\"flip-card-back\">" + cardBackSVG() + "</div></div><div class=\"claimed-label\"><span>Claimed</span></div>";
+      card.addEventListener("click", function() { pickCard(idx); });
+    })(i);
+    wrap.appendChild(card);
+  }
+  updateCardStatus();
+  goTo("page-cardpick");
+});
+
+socket.on("cardClaimed", function(data) {
+  if (isMyId(data.playerId)) return;
+  claimedCards.add(data.index);
+  var card = document.getElementById("flip-card-" + data.index);
+  if (card) card.classList.add("claimed");
+  updateCardStatus();
+});
+
+socket.on("yourRole", function(data) {
+  playerRole = data.role;
+  if (myCardIndex !== null) {
+    var front = document.querySelector("#flip-card-" + myCardIndex + " .flip-card-front");
+    if (front) front.innerHTML = cardFrontHTML(data.role);
+  }
+});
+
+socket.on("allCardsPicked", function() {
+  allPicked = true;
+  document.querySelectorAll(".flip-card").forEach(function(card) {
+    if (!card.classList.contains("mine")) {
+      card.style.transition = "opacity 0.6s ease, transform 0.6s ease";
+      card.style.opacity    = "0";
+      card.style.transform  = "scale(0.85)";
+      setTimeout(function() { card.style.display = "none"; }, 600);
+    }
+  });
+  setTimeout(function() {
+    var mine = document.getElementById("flip-card-" + myCardIndex);
+    if (mine) {
+      mine.style.transform  = "scale(1.15)";
+      mine.style.transition = "transform 0.4s ease";
+      setTimeout(function() { mine.classList.add("flipped"); }, 400);
+    }
+    setTimeout(showRoleMessage, 1800);
+  }, 700);
+});
+
+socket.on("nightBegins", function(data) {
+  settings.nightDuration = data.nightDuration;
+  refreshPlayerLists();
+  enterNightPhase();
+});
+
+socket.on("witchWakeUp", function(data) {
+  var row = document.getElementById("pr-save-" + data.victimId);
+  if (row) row.classList.add("selected-save");
+  var saveStatus = document.getElementById("witch-save-status");
+  var killStatus = document.getElementById("witch-kill-status");
+  if (saveStatus) saveStatus.textContent = data.hasSave ? "Save \u2713" : "Save \u2717";
+  if (killStatus) killStatus.textContent = data.hasKill ? "Kill \u2713" : "Kill \u2717";
+  showScreen("screen-witch");
+});
+
+socket.on("seekerResult", function(data) {
+  var box      = document.getElementById("seeker-reveal-box");
+  var roleName = document.getElementById("reveal-role-name");
+  if (box)      box.style.display = "flex";
+  if (roleName) { roleName.textContent = data.role.charAt(0).toUpperCase() + data.role.slice(1); roleName.style.color = ROLE_COLORS[data.role] || "#fff"; }
+  var countEl = document.getElementById("seeker-check-count");
+  if (countEl) countEl.textContent = "1 / 1";
+});
+
+socket.on("wolfCoTargeted", function(data) {
+  var p = getPlayer(data.targetId);
+  addWolfMsg("System", data.byName + " is targeting " + (p ? p.name : data.targetId) + ".", true);
+});
+
+socket.on("playerEliminated", function(data) {
+  if (LIVE_PLAYERS[data.playerId]) LIVE_PLAYERS[data.playerId].alive = false;
+  showVoteoutReveal(data.playerName, data.role);
+  addChatMessage("", data.playerName + " was the " + data.role + ".", "system");
+  refreshPlayerLists();
+});
+
+socket.on("youAreDead", function(data) {
+  isPlayerDead = true;
+  var d = ROLE_CARD_DATA[data.role] || ROLE_CARD_DATA.villager;
+  if (data.hunterMode) {
+    showScreen("screen-hunter");
+    buildHunterList();
+  } else {
+    markPlayerDead(d.name, d.color);
+  }
+});
+
+socket.on("hunterActive", function(data) {
+  if (!isPlayerDead) showScreen("screen-hunter-wait");
+  chatSystem("— " + data.hunterName + " was the Hunter — taking aim... —");
+});
+
+socket.on("morningTransition", function(data) {
+  // Close vote overlay if somehow still open
+  closeVoteOverlay();
+  startMorningTransition(
+    data.dayNum,
+    "Dawn breaks over<br>the village.",
+    "The night is over. Gather the village and find out what happened while you slept."
+  );
+});
+
+socket.on("gameOver", function(data) {
+  clearInterval(timerInterval);
+  showVictory(data.winner, data.wolves);
+});
+
+socket.on("chatMessage", function(data) {
+  var type = isMyId(data.senderId) ? "self" : "other";
+  addChatMessage(data.name, data.text, type);
+});
+
+socket.on("wolfChat", function(data) {
+  var isSelf = isMyId(data.senderId);
+  addWolfMsg(isSelf ? "You" : data.name, data.text, false);
+});
+
+socket.on("deadChat", function(data) {
+  var isSelf = isMyId(data.senderId);
+  addDeadMsg(isSelf ? "You" : data.name, data.text, false);
+});
+
+socket.on("playerDC", function(data) {
+  if (LIVE_PLAYERS[data.playerId]) LIVE_PLAYERS[data.playerId].dc = true;
+  chatSystem("— " + data.name + " disconnected (D/C) —");
+  var p = LIVE_PLAYERS[data.playerId];
+  if (p) updateHouseSlot(p.house, p.name + " [D/C]", true);
+});
+
+socket.on("youAreHost", function() {
+  isHost = true;
+  var startBtn    = document.getElementById("start-game-btn");
+  var settingsBtn = document.getElementById("settings-lobby-btn");
+  if (startBtn)    startBtn.style.display = "";
+  if (settingsBtn) settingsBtn.style.display = "";
+  chatSystem("— You are now the host —");
+});
+</script>
+</body>
+</html>
