@@ -1982,7 +1982,7 @@ requestAnimationFrame(loop);
 // On GitHub Pages, set this to your Render URL e.g.:
 const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? ''  // same-origin (local dev with node server)
-  : 'https://dawn-cardgame-backend-production.up.railway.app';
+  : 'dawn-cardgame-backend-production-9bee.up.railway.app';
 
 const socket = io(BACKEND_URL, { transports: ['websocket', 'polling'], reconnectionAttempts: 5 });
 let mySocketId = null;
